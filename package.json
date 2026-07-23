@@ -1,0 +1,29 @@
+{
+  "name": "keystone",
+  "version": "0.0.0",
+  "private": true,
+  "description": "KEYSTONE — the operating system for gyms. AI diet, training & retention engines on one shared member brain, delivered over WhatsApp.",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@keystone/dashboard...",
+    "build": "turbo run build --filter=@keystone/dashboard...",
+    "start": "pnpm --filter @keystone/dashboard start",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "db:seed": "pnpm --filter @keystone/db seed",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "//": "The legacy standalone NestJS API + BullMQ worker are kept for reference but are NOT part of the deployed app — everything runs inside the Next.js app now.",
+    "build:all": "turbo run build",
+    "legacy:infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "legacy:infra:down": "docker compose -f infra/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.3"
+  }
+}

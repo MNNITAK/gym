@@ -1,0 +1,19 @@
+services:
+  # The member brain lives in Firebase Firestore (Google-managed) — no local DB
+  # container. Redis is still required for BullMQ background jobs.
+  redis:
+    image: redis:7-alpine
+    container_name: keystone-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - keystone_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  keystone_redis:

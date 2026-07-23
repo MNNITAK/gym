@@ -1,0 +1,180 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { meApi } from "../../../lib/member-api";
+import { MemberShell, MCard, MLabel, MError, useMemberAuth } from "../../../components/member-ui";
+
+interface Progress {
+  weightSeries: Array<{ date: string; weightKg: number }>;
+  startWeightKg: number | null;
+  currentWeightKg: number | null;
+  changeKg: number | null;
+  milestones: Array<{ id: string; title: string; type: string; at: string }>;
+  twin: { tdee: number; formulaTdee: number | null; usesRegression: boolean; confidence: number; sampleDays: number } | null;
+  streak: { current: number; longest: number };
+  tier: { current: string; perks: string[]; next: string | null; nextPerks: string[] };
+  adherence14d: number;
+  engagement: string | null;
+}
+
+export default function ProgressPage() {
+  const ready = useMemberAuth();
+  const [d, setD] = useState<Progress | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setD(await meApi<Progress>("/progress"));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (ready) void load();
+  }, [ready, load]);
+
+  if (!ready) return null;
+
+  return (
+    <MemberShell title="Your progress" subtitle="The numbers, honestly.">
+      <MError error={error} />
+
+      {/* Weight */}
+      <MCard>
+        <MLabel>Weight</MLabel>
+        <div className="mt-1 flex items-baseline gap-3">
+          <p className="text-4xl font-extrabold tracking-tight">
+            {d?.currentWeightKg ?? "—"}
+            <span className="ml-1 text-sm font-normal text-neutral-500">kg</span>
+          </p>
+          {d?.changeKg != null && d.changeKg !== 0 && (
+            <span
+              className={`rounded-full px-2 py-0.5 font-mono text-[11px] font-bold ${
+                d.changeKg < 0 ? "bg-diet/10 text-diet" : "bg-work/10 text-work"
+              }`}
+            >
+              {d.changeKg > 0 ? "+" : ""}
+              {d.changeKg}kg
+            </span>
+          )}
+        </div>
+        {d?.startWeightKg != null && (
+          <p className="mt-1 text-xs text-neutral-500">Started at {d.startWeightKg}kg</p>
+        )}
+        <Sparkline points={d?.weightSeries ?? []} />
+      </MCard>
+
+      {/* Metabolic twin — the "this is yours, not a calculator" moment */}
+      <MCard className="mt-3 border-diet/30 bg-diet/5">
+        <MLabel>Your metabolism</MLabel>
+        {d?.twin ? (
+          <>
+            <p className="mt-1 text-3xl font-extrabold tracking-tight">
+              {d.twin.tdee}
+              <span className="ml-1 text-sm font-normal text-neutral-500">kcal/day</span>
+            </p>
+            {d.twin.usesRegression ? (
+              <p className="mt-1 text-xs text-neutral-600">
+                Measured from <strong>your own</strong> logged data over {d.twin.sampleDays} days
+                ({Math.round(d.twin.confidence * 100)}% confidence)
+                {d.twin.formulaTdee ? (
+                  <> — a generic calculator would have said {d.twin.formulaTdee}.</>
+                ) : null}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-neutral-600">
+                Currently a population estimate. Log your weight and food daily for two weeks and
+                this becomes <em>your</em> number.
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-neutral-400">Not enough data yet — keep logging.</p>
+        )}
+      </MCard>
+
+      {/* Consistency */}
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <MCard>
+          <MLabel>Streak</MLabel>
+          <p className="mt-1 text-3xl font-extrabold tracking-tight">🔥 {d?.streak.current ?? 0}</p>
+          <p className="text-xs text-neutral-500">Best: {d?.streak.longest ?? 0} days</p>
+        </MCard>
+        <MCard>
+          <MLabel>Last 14 days</MLabel>
+          <p className="mt-1 text-3xl font-extrabold tracking-tight">{d?.adherence14d ?? 0}%</p>
+          <p className="text-xs text-neutral-500">days you checked in</p>
+        </MCard>
+      </div>
+
+      {/* Tier ladder */}
+      <MCard className="mt-3">
+        <MLabel>Your tier</MLabel>
+        <p className="mt-1 text-xl font-extrabold tracking-tight">{d?.tier.current ?? "—"}</p>
+        <ul className="mt-1 space-y-0.5">
+          {(d?.tier.perks ?? []).map((p, i) => (
+            <li key={i} className="text-xs text-neutral-600">✓ {p}</li>
+          ))}
+        </ul>
+        {d?.tier.next && (
+          <div className="mt-3 rounded-xl bg-neutral-50 p-3">
+            <p className="text-xs font-bold">Next: {d.tier.next}</p>
+            <ul className="mt-1 space-y-0.5">
+              {d.tier.nextPerks.slice(0, 2).map((p, i) => (
+                <li key={i} className="text-xs text-neutral-500">→ {p}</li>
+              ))}
+            </ul>
+            <p className="mt-1.5 text-[11px] text-neutral-500">
+              Keep your streak and check-ins going to get there.
+            </p>
+          </div>
+        )}
+      </MCard>
+
+      {/* Wins */}
+      <section className="mt-5">
+        <MLabel>Your wins</MLabel>
+        <div className="mt-2 space-y-2">
+          {(d?.milestones.length ?? 0) === 0 && (
+            <p className="text-sm text-neutral-400">
+              No milestones yet — they show up here as you hit them.
+            </p>
+          )}
+          {d?.milestones.map((m) => (
+            <MCard key={m.id}>
+              <p className="text-sm font-bold">🏆 {m.title}</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400">
+                {m.type.replace(/_/g, " ")}
+              </p>
+            </MCard>
+          ))}
+        </div>
+      </section>
+    </MemberShell>
+  );
+}
+
+/** Tiny inline weight trend — no chart library, just the shape of the journey. */
+function Sparkline({ points }: { points: Array<{ date: string; weightKg: number }> }) {
+  if (points.length < 2) return null;
+  const w = 300;
+  const h = 60;
+  const vals = points.map((p) => p.weightKg);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const span = max - min || 1;
+  const d = points
+    .map((p, i) => {
+      const x = (i / (points.length - 1)) * w;
+      const y = h - ((p.weightKg - min) / span) * (h - 8) - 4;
+      return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="mt-3 w-full" preserveAspectRatio="none" role="img" aria-label="Weight trend">
+      <path d={d} fill="none" stroke="#12995A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

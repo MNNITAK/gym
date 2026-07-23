@@ -1,0 +1,731 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KEYSTONE — SaaS Proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F6F2;--card:#FFFFFF;--ink:#100E0A;--ink-soft:#4C483E;--ink-faint:#8A857A;--line:#E4E1D8;
+    --diet:#12995A;--diet-bg:#E4F4EA;
+    --crm:#5346E6;--crm-bg:#EAE7FB;
+    --work:#1568D4;--work-bg:#E4EEFB;
+    --energy:#FF4D22;--energy-bg:#FFEAE3;
+    --gold:#D68C13;--gold-bg:#FBEFD6;
+    --brand:#1A1560;--brand-bg:#E7E5F5;
+    --radius:16px;
+    --disp:"Bricolage Grotesque",system-ui,sans-serif;--body:"Inter",system-ui,sans-serif;--mono:"JetBrains Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+  h1,h2,h3,h4{font-family:var(--disp);font-weight:800;line-height:1.02;letter-spacing:-.02em;margin:0}
+  p{margin:0 0 1rem}
+  .lead{font-size:1.15rem;color:var(--ink-soft)}
+  .num{font-family:var(--disp);font-weight:800;font-size:.86rem;color:var(--energy);letter-spacing:.02em}
+  .eyebrow{font-family:var(--mono);font-weight:500;font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint)}
+  .kid{font-family:var(--body);background:var(--gold-bg);border-left:4px solid var(--gold);border-radius:0 10px 10px 0;padding:14px 18px;color:#6b4a08;font-size:.95rem;margin:18px 0}
+  .kid b{color:var(--gold);font-weight:600}
+  .plain{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;color:var(--ink-soft);font-size:.95rem;margin:18px 0;position:relative;padding-left:44px}
+  .plain::before{content:"→";position:absolute;left:18px;top:12px;font-family:var(--disp);font-weight:800;color:var(--energy);font-size:1.1rem}
+
+  /* HERO */
+  .hero{background:linear-gradient(180deg,#100E0A 0%,#1A1560 100%);color:#F7F6F2;padding:88px 0 76px;position:relative;overflow:hidden}
+  .hero .wrap{position:relative;z-index:2}
+  .hero .eyebrow{color:#B9B3D4;font-family:var(--mono)}
+  .hero h1{font-size:clamp(2.7rem,6.8vw,5.2rem);margin:16px 0 22px;color:#fff;letter-spacing:-.03em}
+  .hero h1 .a{color:#4EE68E}.hero h1 .b{color:#77B4FF}.hero h1 .c{color:#B9AFFF}
+  .hero .sub{font-size:1.22rem;color:#D8D3C6;max-width:680px}
+  .hero .tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:32px}
+  .tag{font-size:.78rem;font-weight:500;padding:8px 14px;border-radius:100px;border:1px solid #37327c;color:#EDE9DE;font-family:var(--mono);letter-spacing:.06em}
+  .tag.d{border-color:#1c5b3a;color:#77e3a9;background:rgba(15,42,28,.6)}
+  .tag.m{border-color:#3a3170;color:#b9afff;background:rgba(23,19,56,.6)}
+  .tag.w{border-color:#22456f;color:#8dc0ff;background:rgba(14,32,56,.6)}
+  .orb{position:absolute;border-radius:50%;filter:blur(4px);opacity:.4}
+  .orb.a{width:380px;height:380px;background:radial-gradient(circle,#3ab876,transparent 65%);top:-140px;right:-80px}
+  .orb.b{width:360px;height:360px;background:radial-gradient(circle,#5346E6,transparent 65%);bottom:-170px;left:-100px}
+  .orb.c{width:200px;height:200px;background:radial-gradient(circle,#1568D4,transparent 65%);top:40%;right:20%;opacity:.3}
+  .hero-mono{position:absolute;bottom:16px;right:24px;font-family:var(--mono);font-size:.7rem;color:#6a6486;letter-spacing:.2em;z-index:3}
+
+  section{padding:64px 0}
+  .sec-head{max-width:760px;margin-bottom:34px}
+  .sec-head h2{font-size:clamp(2rem,4.4vw,3rem);margin:10px 0 14px}
+  .sec-head .lead{max-width:680px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:820px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:.76rem;font-weight:600;padding:5px 12px;border-radius:100px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase}
+  .pill.d{background:var(--diet-bg);color:#0a6b3d}.pill.c{background:var(--crm-bg);color:#3226a8}
+  .pill.w{background:var(--work-bg);color:#0f4a97}.pill.e{background:var(--energy-bg);color:#c22e0e}
+  .pill.gold{background:var(--gold-bg);color:#8a5a08}
+  .pill.brand{background:var(--brand-bg);color:var(--brand)}
+
+  .divider-band{background:var(--ink);color:#EDE9DE;padding:52px 0;position:relative;overflow:hidden}
+  .divider-band .wrap{position:relative;z-index:2}
+  .divider-band h2{color:#fff;font-size:clamp(1.7rem,4vw,2.5rem);max-width:800px}
+  .divider-band p{color:#C9C4B8;margin:12px 0 0;max-width:640px}
+  .divider-band.brand{background:linear-gradient(150deg,#1A1560,#100E0A)}
+
+  /* WHY NOW - three converging trends */
+  .trend{border:1px solid var(--line);border-radius:14px;padding:22px;background:var(--card);position:relative}
+  .trend .n{font-family:var(--mono);font-size:.72rem;color:var(--energy);letter-spacing:.18em}
+  .trend h4{font-size:1.15rem;margin:6px 0 8px}
+  .trend p{font-size:.94rem;color:var(--ink-soft);margin:0}
+
+  /* PAIN POINTS */
+  .pain{display:flex;gap:14px;align-items:flex-start;padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+  .pain .ic{flex:0 0 44px;height:44px;border-radius:10px;display:grid;place-items:center;background:var(--energy-bg);color:var(--energy);font-size:22px}
+  .pain b{font-family:var(--disp);font-weight:600}
+  .pain span{color:var(--ink-soft);font-size:.94rem}
+
+  /* PRODUCT SYSTEMS */
+  .sys{border-radius:var(--radius);padding:28px;color:#fff;position:relative;overflow:hidden}
+  .sys.diet{background:linear-gradient(150deg,#0f8a52,#0b6b40)}
+  .sys.work{background:linear-gradient(150deg,#1f74dd,#134f9e)}
+  .sys.crm{background:linear-gradient(150deg,#5a4ce8,#3f33b0)}
+  .sys h3{font-size:1.5rem;color:#fff;margin:12px 0 8px}
+  .sys .who{font-size:.82rem;opacity:.85;margin-bottom:14px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase}
+  .sys ul{margin:0;padding:0;list-style:none}
+  .sys li{padding:9px 0;border-top:1px solid rgba(255,255,255,.18);font-size:.94rem;display:flex;gap:10px;line-height:1.5}
+  .sys li:first-child{border-top:none}.sys li::before{content:"→";opacity:.7;flex-shrink:0}
+
+  /* INNOVATION BLOCKS */
+  .innov{border:1px solid var(--line);border-radius:14px;padding:20px;background:var(--card);position:relative}
+  .innov .idx{position:absolute;top:-11px;left:16px;font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;color:#fff;padding:3px 10px;border-radius:100px;background:var(--ink)}
+  .innov.d .idx{background:var(--diet)}
+  .innov.w .idx{background:var(--work)}
+  .innov.c .idx{background:var(--crm)}
+  .innov h4{font-family:var(--disp);font-weight:600;font-size:1.08rem;margin:6px 0 6px}
+  .innov p{font-size:.92rem;color:var(--ink-soft);margin:0}
+  .innov .why{font-family:var(--mono);font-size:.72rem;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+  .innov .why b{color:var(--energy);font-weight:600}
+
+  /* MOAT LAYERS */
+  .moat-list{display:flex;flex-direction:column;gap:12px}
+  .moat-row{display:grid;grid-template-columns:52px 1fr;gap:16px;align-items:stretch}
+  .moat-num{background:var(--brand);color:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:800;font-size:1.5rem}
+  .moat-body{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 22px}
+  .moat-body h4{font-size:1.1rem;margin-bottom:4px}
+  .moat-body .why{color:var(--ink-faint);font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+  .moat-body p{font-size:.93rem;color:var(--ink-soft);margin:0}
+
+  /* PRICING */
+  .price{border:1px solid var(--line);border-radius:14px;padding:22px;background:var(--card);position:relative;display:flex;flex-direction:column}
+  .price.hero-tier{border:2px solid var(--brand);background:linear-gradient(180deg,var(--brand-bg),var(--card))}
+  .price .tier{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;color:var(--brand);text-transform:uppercase}
+  .price h4{font-size:1.4rem;margin:6px 0 4px}
+  .price .amt{font-family:var(--disp);font-weight:800;font-size:1.9rem;line-height:1;margin:12px 0 4px}
+  .price .amt small{font-family:var(--body);font-weight:400;font-size:.9rem;color:var(--ink-faint)}
+  .price ul{margin:12px 0 0;padding:0;list-style:none;flex:1}
+  .price li{padding:6px 0;font-size:.9rem;color:var(--ink-soft);border-top:1px dashed var(--line);display:flex;gap:8px}
+  .price li:first-child{border-top:none}.price li::before{content:"✓";color:var(--diet);font-weight:700;flex-shrink:0}
+
+  /* ROADMAP */
+  .phase{border:1px solid var(--line);border-radius:14px;padding:22px;background:var(--card);position:relative}
+  .phase .pn{position:absolute;top:-13px;left:16px;color:#fff;font-family:var(--mono);font-weight:500;font-size:.7rem;padding:4px 12px;border-radius:100px;letter-spacing:.14em}
+  .phase h4{margin:10px 0 5px;font-size:1.12rem}
+  .phase .subttl{font-family:var(--mono);font-size:.72rem;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+  .phase ul{margin:6px 0 0;padding-left:18px;color:var(--ink-soft);font-size:.9rem}
+  .phase li{margin:4px 0}
+
+  .close{background:var(--ink);color:#EDE9DE;border-radius:var(--radius);padding:44px;text-align:center;position:relative;overflow:hidden}
+  .close::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(83,70,230,.15),transparent 50%),radial-gradient(circle at 80% 80%,rgba(255,77,34,.12),transparent 50%);pointer-events:none}
+  .close .wrap-inner{position:relative;z-index:2}
+  .close h2{color:#fff;font-size:2.1rem;margin-bottom:12px}
+  .cta{display:inline-block;margin-top:20px;background:var(--energy);color:#fff;font-weight:600;padding:14px 32px;border-radius:100px;text-decoration:none;font-family:var(--disp);font-size:.95rem}
+  .foot{padding:30px 0 60px;color:var(--ink-faint);font-family:var(--mono);font-size:.72rem;text-align:center;letter-spacing:.16em}
+  svg{display:block;max-width:100%;height:auto}
+  .code{font-family:var(--mono);font-size:.86rem}
+  @media print{.hero,.divider-band{background:#100E0A !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+
+<!-- =========================== HERO =========================== -->
+<div class="hero">
+  <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+  <div class="wrap">
+    <div class="eyebrow">SaaS proposal · v1 · founder brief</div>
+    <h1>The operating <span class="a">system</span> for gyms<br>that keep <span class="b">members</span> for <span class="c">life</span>.</h1>
+    <p class="sub">Three AI engines — nutrition, training, retention — riding on one shared member brain, delivered through WhatsApp. Sold to gyms as a subscription. Every member who joins any gym on the platform makes the AI a little smarter for everyone.</p>
+    <div class="tags">
+      <span class="tag d">DIET ENGINE</span>
+      <span class="tag w">TRAINING ENGINE</span>
+      <span class="tag m">RETENTION ENGINE</span>
+      <span class="tag">WHATSAPP-NATIVE</span>
+    </div>
+  </div>
+  <div class="hero-mono">KEYSTONE · working name</div>
+</div>
+
+<!-- =========================== 01 · WHY NOW =========================== -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="num">01 — Why this window is open now</div>
+      <h2>Three curves crossed at the same time.</h2>
+      <p class="lead">Any one of these alone wouldn't be enough. Together they make this the first moment where a system like this is actually buildable and buyable.</p>
+    </div>
+
+    <div class="grid g3">
+      <div class="trend">
+        <div class="n">CURVE 01</div>
+        <h4>AI got good enough at reasoning</h4>
+        <p>Modern LLMs can hold a member's context, respect medical constraints, and generate genuinely personalized plans — not just template-fill. That was not true two years ago.</p>
+      </div>
+      <div class="trend">
+        <div class="n">CURVE 02</div>
+        <h4>WhatsApp became the app layer</h4>
+        <p>In India, an app you have to download is a tax you pay in acquisition cost. WhatsApp Business API means zero-friction delivery for 500 million users. Members already live there.</p>
+      </div>
+      <div class="trend">
+        <div class="n">CURVE 03</div>
+        <h4>Gyms are drowning in churn</h4>
+        <p>Post-pandemic, retention is the whole game. The average Indian gym loses ~60% of new joiners in the first six months. Owners now understand this and are actively shopping for solutions.</p>
+      </div>
+    </div>
+    <div class="kid">🧒 <b>Plain version:</b> A few years ago the tech wasn't smart enough, WhatsApp wasn't open for business use, and gym owners didn't know they had a churn problem. Now all three are true. That's the window.</div>
+  </div>
+</section>
+
+<!-- =========================== 02 · WHY EXISTING TOOLS FAIL =========================== -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="num">02 — Why every existing tool falls short</div>
+      <h2>The competitive terrain, honestly.</h2>
+      <p class="lead">There is no lack of fitness apps. There is a complete lack of a tool built for the way gyms actually operate. Everyone else fights for the individual consumer; we sit inside the business.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="pain"><div class="ic">📱</div><div><b>Consumer fitness apps (MyFitnessPal, Fittr, HealthifyMe)</b><br><span>Built for individuals. The gym is bypassed, trainers are irrelevant, and there's no incentive alignment with the business paying rent on the equipment.</span></div></div>
+      <div class="pain"><div class="ic">📋</div><div><b>Gym management software (Gymshark, GymMaster, Wellyx)</b><br><span>Solve billing, attendance, and rosters. Zero intelligence on the actual product — the workouts and diets that keep members coming back.</span></div></div>
+      <div class="pain"><div class="ic">🤖</div><div><b>Generic AI diet/workout bots</b><br><span>Give you a PDF that never changes and has no coach behind it. Novelty use once, then abandoned. No memory, no relationship, no accountability.</span></div></div>
+      <div class="pain"><div class="ic">👤</div><div><b>Manual trainer coaching</b><br><span>Genuinely great — but one trainer cannot personalize, adjust, and follow up with 500 members every week. The math doesn't work at scale.</span></div></div>
+    </div>
+
+    <div class="plain">The gap: <b>a system that sits inside the gym, amplifies the trainer instead of replacing them, and treats retention as the product</b> — not diet or workout in isolation. That gap is the whole business.</div>
+  </div>
+</section>
+
+<!-- =========================== DIVIDER =========================== -->
+<div class="divider-band brand">
+  <div class="wrap">
+    <div class="eyebrow" style="color:#B9B3D4;margin-bottom:12px">THE THESIS</div>
+    <h2>Diet and workout are the visible product. Retention is the actual product. The moat is the data compounding underneath all three.</h2>
+  </div>
+</div>
+
+<!-- =========================== 03 · THE ARCHITECTURE =========================== -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="num">03 — What we build</div>
+      <h2>Three engines. One brain. One channel.</h2>
+      <p class="lead">Every other player in this space builds one of these three well. The unique bet is that they only compound when integrated. A gym running just the diet engine is helpful. A gym running all three becomes an ecosystem members can't leave without losing months of personalization.</p>
+    </div>
+
+    <svg viewBox="0 0 900 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#8A857A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+        <marker id="arb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#1A1560" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+      </defs>
+      <!-- coach layer -->
+      <rect x="30" y="20" width="200" height="52" rx="12" fill="#100E0A"/>
+      <text x="130" y="42" text-anchor="middle" fill="#fff" font-family="Bricolage Grotesque" font-weight="600" font-size="14">Coach interface</text>
+      <text x="130" y="60" text-anchor="middle" fill="#B9B3A4" font-family="Inter" font-size="11">approve · edit · reach out</text>
+      <!-- member layer -->
+      <rect x="670" y="20" width="200" height="52" rx="12" fill="#12995A"/>
+      <text x="770" y="42" text-anchor="middle" fill="#fff" font-family="Bricolage Grotesque" font-weight="600" font-size="14">Member on WhatsApp</text>
+      <text x="770" y="60" text-anchor="middle" fill="#E4F4EA" font-family="Inter" font-size="11">chat · log · ask · celebrate</text>
+      <!-- arrows to engines -->
+      <line x1="130" y1="72" x2="130" y2="118" stroke="#8A857A" stroke-width="1.4" marker-end="url(#ar)"/>
+      <line x1="770" y1="72" x2="770" y2="118" stroke="#8A857A" stroke-width="1.4" marker-end="url(#ar)"/>
+      <!-- three engines -->
+      <rect x="30" y="122" width="270" height="60" rx="12" fill="#E4F4EA" stroke="#12995A" stroke-width="1.4"/>
+      <text x="165" y="146" text-anchor="middle" fill="#0a6b3d" font-family="Bricolage Grotesque" font-weight="700" font-size="15">Diet Engine</text>
+      <text x="165" y="167" text-anchor="middle" fill="#0a6b3d" font-family="Inter" font-size="11.5">metabolic twin · protocol library · notes</text>
+      <rect x="315" y="122" width="270" height="60" rx="12" fill="#E4EEFB" stroke="#1568D4" stroke-width="1.4"/>
+      <text x="450" y="146" text-anchor="middle" fill="#0f4a97" font-family="Bricolage Grotesque" font-weight="700" font-size="15">Training Engine</text>
+      <text x="450" y="167" text-anchor="middle" fill="#0f4a97" font-family="Inter" font-size="11.5">trend library · fatigue guardian · hybrid</text>
+      <rect x="600" y="122" width="270" height="60" rx="12" fill="#EAE7FB" stroke="#5346E6" stroke-width="1.4"/>
+      <text x="735" y="146" text-anchor="middle" fill="#3226a8" font-family="Bricolage Grotesque" font-weight="700" font-size="15">Retention Engine</text>
+      <text x="735" y="167" text-anchor="middle" fill="#3226a8" font-family="Inter" font-size="11.5">memory · rituals · churn prediction</text>
+      <!-- to shared brain -->
+      <line x1="165" y1="182" x2="410" y2="230" stroke="#1A1560" stroke-width="1.5" marker-end="url(#arb)"/>
+      <line x1="450" y1="182" x2="450" y2="230" stroke="#1A1560" stroke-width="1.5" marker-end="url(#arb)"/>
+      <line x1="735" y1="182" x2="490" y2="230" stroke="#1A1560" stroke-width="1.5" marker-end="url(#arb)"/>
+      <!-- shared brain -->
+      <rect x="200" y="234" width="500" height="72" rx="14" fill="#1A1560"/>
+      <text x="450" y="258" text-anchor="middle" fill="#fff" font-family="Bricolage Grotesque" font-weight="700" font-size="17">Shared member brain</text>
+      <text x="450" y="278" text-anchor="middle" fill="#B9AFFF" font-family="Inter" font-size="12">profile · logs · metabolic twin · extracted memory · preferences</text>
+      <text x="450" y="296" text-anchor="middle" fill="#8577c9" font-family="JetBrains Mono" font-size="10.5" letter-spacing="1.5">ONE SOURCE OF TRUTH</text>
+      <!-- to data layer -->
+      <line x1="450" y1="306" x2="450" y2="342" stroke="#8A857A" stroke-width="1.4" marker-end="url(#ar)"/>
+      <!-- data flywheel -->
+      <rect x="240" y="346" width="420" height="52" rx="12" fill="#FBEFD6" stroke="#D68C13" stroke-width="1.4" stroke-dasharray="6 5"/>
+      <text x="450" y="368" text-anchor="middle" fill="#8a5a08" font-family="Bricolage Grotesque" font-weight="600" font-size="14">Cross-gym learning layer</text>
+      <text x="450" y="388" text-anchor="middle" fill="#a5720f" font-family="Inter" font-size="11.5">anonymized patterns across all gyms improve every gym's AI</text>
+      <!-- caption -->
+      <text x="450" y="424" text-anchor="middle" fill="#8A857A" font-family="JetBrains Mono" font-size="10.5" letter-spacing="2">EVERY MEMBER MAKES THE SYSTEM SMARTER FOR EVERY OTHER MEMBER</text>
+    </svg>
+    <div class="kid">🧒 <b>Plain version:</b> Three helpers, one notebook, one door. And there's a magic room at the bottom where all the notebooks learn from each other — so when a member at gym #47 in Pune reacts well to a certain meal swap, gym #128 in Delhi's AI gets slightly better at suggesting that swap too. Nobody's data leaves their own gym, but the patterns are shared.</div>
+  </div>
+</section>
+
+<!-- =========================== 04 · DIET ENGINE =========================== -->
+<section style="background:var(--diet-bg)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="pill d">🥗 PRODUCT 01 · DIET ENGINE</span>
+      <h2 style="margin-top:16px">Nutrition that actually adapts to a real life.</h2>
+      <p class="lead">Every generic AI diet tool assumes life is stable. The Diet Engine assumes it isn't — travel, weddings, cravings, budget shifts, motivation dips, plateaus. Each of the five innovations below solves one of those failure modes explicitly.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="innov d"><span class="idx">INNOV 01</span>
+        <h4>The Metabolic Twin</h4>
+        <p>A living model of the member's real metabolism, rebuilt every week from their own logged data. Not a formula estimate — a regression against their actual body. After 3 weeks, the plan is calibrated to <em>this specific person</em>, not a demographic average.</p>
+        <div class="why"><b>Why it wins:</b> No human coach recalculates individual TDEE for 500 clients every week. Software does trivially.</div>
+      </div>
+      <div class="innov d"><span class="idx">INNOV 02</span>
+        <h4>The free-form Note field</h4>
+        <p>The member (or coach) can add plain-language notes at any time: <span class="code">"stressed this week, sleeping badly," "trying to save money," "wedding on Saturday, want to enjoy."</span> The AI parses these and adjusts the plan — softer targets on a bad week, cheaper protein sources in tight months, a strategic surplus day around the wedding.</p>
+        <div class="why"><b>Why it wins:</b> Real life doesn't fit forms. This is the field where humans get to be human.</div>
+      </div>
+      <div class="innov d"><span class="idx">INNOV 03</span>
+        <h4>The Protocol Library (the "personal panel")</h4>
+        <p>The AI doesn't just pick calories — it picks a protocol: carb cycling, mini-cut, refeed, protein-sparing modified fast, TDEE maintenance phase, reverse diet. It selects and adapts based on where the member is in their journey, and explains why in one sentence.</p>
+        <div class="why"><b>Why it wins:</b> This is the "unique ideas" panel. Most tools give one diet forever. Real coaches shift protocols; this codifies that expertise.</div>
+      </div>
+      <div class="innov d"><span class="idx">INNOV 04</span>
+        <h4>Life-aware event handling</h4>
+        <p>The AI knows about upcoming events (weddings, travel, holidays) via the member's calendar or a WhatsApp mention. It builds a <em>damage-control mini-plan</em> around the event: extra activity in the days before, sensible restaurant orders, a return-to-plan protocol after.</p>
+        <div class="why"><b>Why it wins:</b> Members quit plans they can't follow on real weekends. This one flexes.</div>
+      </div>
+      <div class="innov d"><span class="idx">INNOV 05</span>
+        <h4>Adherence-first adjustment logic</h4>
+        <p>If adherence is under 60% and progress stalls, the AI <em>does not</em> lower the calories. It flags a behavior conversation for the coach instead. Only high-adherence plateaus trigger numerical adjustments.</p>
+        <div class="why"><b>Why it wins:</b> The mistake most coaches make under time pressure. Encoding it as a hard rule is a real quality upgrade over average practice.</div>
+      </div>
+      <div class="innov d"><span class="idx">INNOV 06</span>
+        <h4>Craving prediction &amp; pre-emptive meals</h4>
+        <p>The AI learns each member's craving pattern from their check-ins (4pm sugar dip, late-night hunger, weekend social eating). It pre-empts with strategic meal timing and satiety-boosted portions on those days.</p>
+        <div class="why"><b>Why it wins:</b> Most diet failure isn't willpower. It's ambush cravings. Prevention beats resistance.</div>
+      </div>
+    </div>
+
+    <div class="kid">🧒 <b>Plain version:</b> Imagine a nutritionist who never sleeps, remembers everything about you, updates your plan every week based on how your body is actually reacting, and knows to give you room when there's a wedding on Saturday. That's the Diet Engine.</div>
+  </div>
+</section>
+
+<!-- =========================== 05 · TRAINING ENGINE =========================== -->
+<section style="background:var(--work-bg)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="pill w">🏋️ PRODUCT 02 · TRAINING ENGINE</span>
+      <h2 style="margin-top:16px">A training brain that keeps up with fitness trends.</h2>
+      <p class="lead">The training world moves. Five years ago it was CrossFit; today Hyrox and hybrid athletics are surging; tomorrow it'll be something else. Static workout templates get stale fast. The Training Engine is built as a <em>library</em> that expands.</p>
+    </div>
+
+    <!-- Trend library visualization -->
+    <div class="card" style="margin-bottom:22px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
+        <h4 style="font-size:1.15rem">The Trend Library</h4>
+        <span class="pill w">EXPANDING QUARTERLY</span>
+      </div>
+      <p style="margin-top:6px;color:var(--ink-soft);font-size:.94rem">A curated, versioned catalog of proven training protocols. The AI picks from this library — it does not invent programming from scratch. New protocols are added by a strength-and-conditioning specialist on staff.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+        <span class="pill w">STRONGLIFTS 5×5</span>
+        <span class="pill w">PPL (PUSH·PULL·LEGS)</span>
+        <span class="pill w">WENDLER 5/3/1</span>
+        <span class="pill w">NSUNS</span>
+        <span class="pill w">PHAT / PHUL</span>
+        <span class="pill w">GVT · GERMAN VOLUME</span>
+        <span class="pill w">TEXAS METHOD</span>
+        <span class="pill w">UPPER / LOWER</span>
+        <span class="pill w">HYROX PREP</span>
+        <span class="pill w">HYBRID ATHLETE</span>
+        <span class="pill w">POWERBUILDING</span>
+        <span class="pill w">FUNCTIONAL STRENGTH</span>
+        <span class="pill w">CROSSFIT-STYLE METCON</span>
+        <span class="pill w">CALISTHENICS PROGRESSION</span>
+        <span class="pill w">POSTPARTUM RETURN</span>
+        <span class="pill w">50+ AGE-ADAPTED</span>
+      </div>
+      <p style="margin-top:14px;font-size:.86rem;color:var(--ink-faint)">Each protocol carries embedded science: volume landmarks, progression schemes, deload triggers, exercise banks, injury contraindications. The AI selects and personalizes, never fabricates.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="innov w"><span class="idx">INNOV 01</span>
+        <h4>The Trend Library (above)</h4>
+        <p>The AI picks a protocol from the curated library based on goal, experience, days available, equipment, and current trend interest ("I want to try Hyrox"). Every plan is rooted in real, tested programming — not LLM-invented sets and reps.</p>
+        <div class="why"><b>Why it wins:</b> The library itself is a moat. New entrants would need months of S&amp;C expertise to replicate it.</div>
+      </div>
+      <div class="innov w"><span class="idx">INNOV 02</span>
+        <h4>The Fatigue Guardian</h4>
+        <p>Tracks RPE trends, sleep, and soreness reports across sessions. When cumulative fatigue crosses a threshold, it forces a deload week — even if the member wants to keep pushing. Prevents burnout and injury without asking permission.</p>
+        <div class="why"><b>Why it wins:</b> Junior trainers skip deloads under time pressure. This makes it structural.</div>
+      </div>
+      <div class="innov w"><span class="idx">INNOV 03</span>
+        <h4>Hybrid Athlete Mode</h4>
+        <p>For members training for events (marathon, Hyrox, powerlifting meet, first pull-up), the engine coordinates strength + conditioning + recovery + diet across the week. Peaking protocols built in for competition dates.</p>
+        <div class="why"><b>Why it wins:</b> Solves a real, growing category — hybrid athleticism is the fastest-growing gym trend of 2024-25.</div>
+      </div>
+      <div class="innov w"><span class="idx">INNOV 04</span>
+        <h4>Injury-aware rehab integration</h4>
+        <p>Member mentions knee pain on WhatsApp → coach is flagged, engine substitutes safe exercises, and if the member opts in, a rehab progression protocol runs in parallel. Return-to-training milestones are tracked automatically.</p>
+        <div class="why"><b>Why it wins:</b> Injuries are the second-biggest cause of churn (after boredom). Handled well, they build loyalty instead.</div>
+      </div>
+      <div class="innov w"><span class="idx">INNOV 05</span>
+        <h4>Movement library with form intelligence</h4>
+        <p>Every exercise has a demo video, common-mistake overlays, and — the interesting part — an "if you can't do X, do Y" ladder built in. Progressions and regressions are automatic based on member ability.</p>
+        <div class="why"><b>Why it wins:</b> Novices don't need "do a pistol squat." They need "here's the 6-step ladder to get there."</div>
+      </div>
+      <div class="innov w"><span class="idx">INNOV 06</span>
+        <h4>Auto-progression from log data</h4>
+        <p>Hit the top of the rep range at RPE ≤8 for two sessions? Load goes up next week. Fell short two sessions? Load holds and technique focus increases. Every decision from real logs, never from a calendar.</p>
+        <div class="why"><b>Why it wins:</b> This is what a great trainer does mentally — encoded, at scale, for everyone.</div>
+      </div>
+    </div>
+
+    <div class="kid">🧒 <b>Plain version:</b> Imagine a training coach who knows every workout program ever written, keeps up with the latest trends, remembers how hard your last workout felt, and knows when to push you vs. when to give you a rest week. That's the Training Engine.</div>
+  </div>
+</section>
+
+<!-- =========================== 06 · RETENTION ENGINE =========================== -->
+<section style="background:var(--crm-bg)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="pill c">⚙️ PRODUCT 03 · RETENTION ENGINE</span>
+      <h2 style="margin-top:16px">The engine that turns members into a habit.</h2>
+      <p class="lead">Members don't quit because the plan is bad. They quit because they lose momentum and feel unseen. This engine is the psychological infrastructure that prevents both, built on real behavioral science, not vibes.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="innov c"><span class="idx">INNOV 01</span>
+        <h4>Compounding memory</h4>
+        <p>After every WhatsApp conversation, the AI extracts durable facts: dislikes paneer, travels the third week, motivated by numbers not compliments, has a sore knee since July 10. These get written to structured fields on the profile. Three months in, the bot knows the member better than a new trainer would.</p>
+        <div class="why"><b>Why it wins:</b> This is the switching cost. Rip out KEYSTONE and the gym loses months of accumulated intelligence about each member.</div>
+      </div>
+      <div class="innov c"><span class="idx">INNOV 02</span>
+        <h4>The Ritual Engine</h4>
+        <p>Daily micro-rituals delivered via WhatsApp: morning weigh-in prompt with a single-tap log, pre-workout intention setting, post-workout reflection, evening wind-down. Two minutes a day, five touchpoints. Habits form through frequency, not intensity.</p>
+        <div class="why"><b>Why it wins:</b> Attachment isn't built by grand gestures. It's built by tiny daily rituals people don't want to lose.</div>
+      </div>
+      <div class="innov c"><span class="idx">INNOV 03</span>
+        <h4>Churn prediction 30 days out</h4>
+        <p>An ML model scores every member's churn risk based on attendance drift, adherence dips, response latency, and sentiment in messages. High-risk members are flagged to the coach with a specific intervention suggestion, before they've actually decided to leave.</p>
+        <div class="why"><b>Why it wins:</b> By the time a member says "I want to cancel," you've already lost. This intervenes at day 20 of a downward trend, not day 90.</div>
+      </div>
+      <div class="innov c"><span class="idx">INNOV 04</span>
+        <h4>Streaks, tiers &amp; loss-framed nudges</h4>
+        <p>Visible attendance streaks. Bronze → Silver → Gold → Platinum tiers with real perks. Renewal messages framed around what they'd <em>lose</em> (their 47-day streak, their Gold tier, their tracked progress) rather than what they'd save.</p>
+        <div class="why"><b>Why it wins:</b> Loss aversion is roughly 2× stronger than gain-seeking. This is the peer-reviewed psychology, made operational.</div>
+      </div>
+      <div class="innov c"><span class="idx">INNOV 05</span>
+        <h4>The "Send a win" workflow</h4>
+        <p>The system detects milestone moments — 5 kg lost, first pull-up, 30-day streak, PR broken — and prompts the coach to send a personal congratulations. Not automated. A tap that opens a pre-drafted message the coach can personalize in 10 seconds.</p>
+        <div class="why"><b>Why it wins:</b> Highest-ROI activity in a gym, and the one nobody does. Turns members into referrers.</div>
+      </div>
+      <div class="innov c"><span class="idx">INNOV 06</span>
+        <h4>Concierge bot on WhatsApp</h4>
+        <p>Members ask "what's my plan today," "book Saturday's Hyrox class," "when's my fee due," "pause my membership" — answered instantly, 24/7, in Hindi or English. Tickets that need judgment escalate to staff with full context attached.</p>
+        <div class="why"><b>Why it wins:</b> Extends staff presence infinitely. Members feel supported at 11pm, staff aren't on call.</div>
+      </div>
+    </div>
+    <div class="kid">🧒 <b>Plain version:</b> The reason people quit isn't usually the workout. It's the feeling that no one notices whether they showed up or not. This engine makes sure someone always notices — and does the noticing at scale, without a human staying up all night.</div>
+  </div>
+</section>
+
+<!-- =========================== DIVIDER · COMPOUND EFFECT =========================== -->
+<div class="divider-band">
+  <div class="wrap">
+    <div class="eyebrow" style="color:#8577c9;margin-bottom:12px">THE COMPOUND EFFECT</div>
+    <h2>A member on all three engines is 4× harder to lose than a member on any one — because leaving means losing a personalized diet, a calibrated training plan, and months of extracted context all at once.</h2>
+    <p>That is the ecosystem lock-in, and it's the entire commercial thesis.</p>
+  </div>
+</div>
+
+<!-- =========================== 07 · THE MOAT =========================== -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="num">07 — The moat, six layers deep</div>
+      <h2>Why this doesn't get commoditized by GPT-6.</h2>
+      <p class="lead">A better AI model on its own doesn't threaten this business. The moat isn't the model — it's what sits around it. Six defensible layers, roughly in order of how quickly they compound.</p>
+    </div>
+
+    <div class="moat-list">
+      <div class="moat-row">
+        <div class="moat-num">1</div>
+        <div class="moat-body">
+          <h4>Coach-in-the-loop architecture</h4>
+          <div class="why">POSITIONING · MEDIUM-TERM</div>
+          <p>Every other AI tool tries to replace trainers. This one amplifies them. That's a positioning moat: trainers become advocates who resist replacement, and gym owners trust a tool that supports their staff rather than threatening them.</p>
+        </div>
+      </div>
+      <div class="moat-row">
+        <div class="moat-num">2</div>
+        <div class="moat-body">
+          <h4>The compounding member memory</h4>
+          <div class="why">SWITCHING COST · GROWS FOREVER</div>
+          <p>Every conversation extracts durable facts. After six months, the profile of each member is worth more than a new coach's onboarding notes. Ripping KEYSTONE out of a gym means losing all of that structured intelligence.</p>
+        </div>
+      </div>
+      <div class="moat-row">
+        <div class="moat-num">3</div>
+        <div class="moat-body">
+          <h4>The Trend &amp; Protocol Library</h4>
+          <div class="why">CURATION · REPLICATION IS SLOW</div>
+          <p>Curated by a strength &amp; conditioning specialist, updated quarterly, with embedded science on every protocol. A new entrant would need 6-12 months of S&amp;C expertise to build even a passable equivalent, and it keeps growing.</p>
+        </div>
+      </div>
+      <div class="moat-row">
+        <div class="moat-num">4</div>
+        <div class="moat-body">
+          <h4>Cross-gym learning layer</h4>
+          <div class="why">DATA FLYWHEEL · NETWORK EFFECT</div>
+          <p>Anonymized patterns across every gym on the platform improve the AI for every other gym. Which meal swaps stick? Which workouts correlate with lower dropoff? Which nudges land in Hindi vs English? Every new customer makes the product better for existing ones.</p>
+        </div>
+      </div>
+      <div class="moat-row">
+        <div class="moat-num">5</div>
+        <div class="moat-body">
+          <h4>Ecosystem integration depth</h4>
+          <div class="why">OPERATIONAL LOCK · HARD TO REPLACE</div>
+          <p>Once KEYSTONE is running a gym's diet plans, workout plans, WhatsApp support, renewal reminders, and coach dashboard — it isn't a "tool," it's the operating system. Switching cost is measured in months, not days.</p>
+        </div>
+      </div>
+      <div class="moat-row">
+        <div class="moat-num">6</div>
+        <div class="moat-body">
+          <h4>Regulatory &amp; safety compliance</h4>
+          <div class="why">TRUST · COMPOUNDS OVER TIME</div>
+          <p>Nutrition and injury handling are medical-adjacent. Built-in disclaimers, medical-flag routing, safe-floor enforcement, and eating-disorder guardrails create a compliance track record that new AI-only entrants can't replicate quickly without lawsuits.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="kid">🧒 <b>Plain version:</b> A bigger AI can't beat this the way a bigger calculator can't beat a bank. The advantage isn't the smartness of the AI — it's the relationships, the library, the data, the trust, and the operational depth built around it.</div>
+  </div>
+</section>
+
+<!-- =========================== 08 · DATA FLYWHEEL =========================== -->
+<section style="background:var(--card)">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="num">08 — The data flywheel</div>
+      <h2>Every member makes the product better.</h2>
+      <p class="lead">This is what turns a fitness app into a company with defensible growth. Six stages of a loop that gets stronger with scale.</p>
+    </div>
+
+    <svg viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Data flywheel diagram">
+      <defs>
+        <marker id="fw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#1A1560" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+      </defs>
+      <!-- center label -->
+      <circle cx="450" cy="230" r="70" fill="#1A1560"/>
+      <text x="450" y="222" text-anchor="middle" fill="#fff" font-family="Bricolage Grotesque" font-weight="800" font-size="16">DATA</text>
+      <text x="450" y="244" text-anchor="middle" fill="#fff" font-family="Bricolage Grotesque" font-weight="800" font-size="16">FLYWHEEL</text>
+      <text x="450" y="264" text-anchor="middle" fill="#B9AFFF" font-family="JetBrains Mono" font-size="9.5" letter-spacing="2">GETS STRONGER WITH SCALE</text>
+      <!-- 6 spokes with labels -->
+      <g font-family="Inter" font-size="12.5" font-weight="500">
+        <rect x="200" y="30" width="200" height="56" rx="12" fill="#fff" stroke="#1A1560" stroke-width="1.2"/>
+        <text x="300" y="52" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="700" font-size="14" fill="#1A1560">1. Members join</text>
+        <text x="300" y="72" text-anchor="middle" fill="#4C483E" font-size="11.5">plans, logs, WhatsApp chats</text>
+
+        <rect x="500" y="30" width="200" height="56" rx="12" fill="#fff" stroke="#1A1560" stroke-width="1.2"/>
+        <text x="600" y="52" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="700" font-size="14" fill="#1A1560">2. Data compounds</text>
+        <text x="600" y="72" text-anchor="middle" fill="#4C483E" font-size="11.5">patterns become visible</text>
+
+        <rect x="680" y="200" width="200" height="56" rx="12" fill="#fff" stroke="#1A1560" stroke-width="1.2"/>
+        <text x="780" y="222" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="700" font-size="14" fill="#1A1560">3. AI gets smarter</text>
+        <text x="780" y="242" text-anchor="middle" fill="#4C483E" font-size="11.5">better plans, better memory</text>
+
+        <rect x="500" y="370" width="200" height="56" rx="12" fill="#fff" stroke="#1A1560" stroke-width="1.2"/>
+        <text x="600" y="392" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="700" font-size="14" fill="#1A1560">4. Members stay longer</text>
+        <text x="600" y="412" text-anchor="middle" fill="#4C483E" font-size="11.5">retention improves visibly</text>
+
+        <rect x="200" y="370" width="200" height="56" rx="12" fill="#fff" stroke="#1A1560" stroke-width="1.2"/>
+        <text x="300" y="392" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="700" font-size="14" fill="#1A1560">5. Gyms tell gyms</text>
+        <text x="300" y="412" text-anchor="middle" fill="#4C483E" font-size="11.5">word-of-mouth in the industry</text>
+
+        <rect x="20" y="200" width="200" height="56" rx="12" fill="#fff" stroke="#1A1560" stroke-width="1.2"/>
+        <text x="120" y="222" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="700" font-size="14" fill="#1A1560">6. More gyms join</text>
+        <text x="120" y="242" text-anchor="middle" fill="#4C483E" font-size="11.5">flywheel accelerates</text>
+      </g>
+      <!-- arrows connecting -->
+      <path d="M400 58 Q450 20 500 58" fill="none" stroke="#1A1560" stroke-width="1.6" marker-end="url(#fw)"/>
+      <path d="M700 68 Q790 120 780 200" fill="none" stroke="#1A1560" stroke-width="1.6" marker-end="url(#fw)"/>
+      <path d="M780 256 Q790 340 700 388" fill="none" stroke="#1A1560" stroke-width="1.6" marker-end="url(#fw)"/>
+      <path d="M500 400 Q450 440 400 400" fill="none" stroke="#1A1560" stroke-width="1.6" marker-end="url(#fw)"/>
+      <path d="M200 388 Q110 340 120 256" fill="none" stroke="#1A1560" stroke-width="1.6" marker-end="url(#fw)"/>
+      <path d="M120 200 Q110 120 200 68" fill="none" stroke="#1A1560" stroke-width="1.6" marker-end="url(#fw)"/>
+    </svg>
+
+    <div class="plain">Every gym on the platform makes the AI better at serving <em>every other gym</em>. That is the core of network-effect defensibility, and it's why this is a company, not a product.</div>
+  </div>
+</section>
+
+<!-- =========================== 09 · BUSINESS MODEL =========================== -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="num">09 — Business model</div>
+      <h2>Sold to gyms. Priced per active member. Tiered.</h2>
+      <p class="lead">A SaaS subscription paid by the gym, priced against the retained-member revenue it protects. Three tiers so a small gym can start cheap and grow into the full ecosystem. Pricing below is illustrative — real numbers should be pressure-tested with 3-5 pilot gyms.</p>
+    </div>
+
+    <div class="grid g3">
+      <div class="price">
+        <div class="tier">TIER 01</div>
+        <h4>Core</h4>
+        <p style="font-size:.88rem;color:var(--ink-faint);margin:4px 0 0">Retention engine only</p>
+        <div class="amt">₹49<small> / active member / mo</small></div>
+        <ul>
+          <li>WhatsApp concierge bot</li>
+          <li>Automated reminders &amp; workflows</li>
+          <li>Coach dashboard</li>
+          <li>Basic analytics</li>
+          <li>Sync with existing gym software</li>
+        </ul>
+      </div>
+      <div class="price hero-tier">
+        <div class="tier">TIER 02 · RECOMMENDED</div>
+        <h4>Pro</h4>
+        <p style="font-size:.88rem;color:var(--ink-faint);margin:4px 0 0">Retention + Diet Engine</p>
+        <div class="amt">₹149<small> / active member / mo</small></div>
+        <ul>
+          <li>Everything in Core</li>
+          <li>Full AI Diet Engine + Metabolic Twin</li>
+          <li>Note field &amp; life-aware planning</li>
+          <li>Protocol library (6 protocols at launch)</li>
+          <li>Adherence-first adjustment logic</li>
+          <li>Grocery lists &amp; branded plan PDFs</li>
+        </ul>
+      </div>
+      <div class="price">
+        <div class="tier">TIER 03</div>
+        <h4>Elite</h4>
+        <p style="font-size:.88rem;color:var(--ink-faint);margin:4px 0 0">Full ecosystem</p>
+        <div class="amt">₹249<small> / active member / mo</small></div>
+        <ul>
+          <li>Everything in Pro</li>
+          <li>Full AI Training Engine</li>
+          <li>Trend library (16+ protocols)</li>
+          <li>Fatigue Guardian + auto-progression</li>
+          <li>Hybrid athlete + Hyrox modes</li>
+          <li>Churn prediction ML model</li>
+          <li>Cross-gym learning access</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4 style="margin:30px 0 12px;font-size:1.1rem">Go-to-market, sequenced</h4>
+    <div class="grid g3">
+      <div class="card"><b style="font-family:var(--disp)">Phase A · 3–5 anchor gyms</b><p style="font-size:.9rem;color:var(--ink-soft);margin:6px 0 0">Deep partnerships, discounted pricing, product-shaping access. Build the case studies before selling widely.</p></div>
+      <div class="card"><b style="font-family:var(--disp)">Phase B · Gym-owner community</b><p style="font-size:.9rem;color:var(--ink-soft);margin:6px 0 0">Trainer certifications, gym-owner WhatsApp groups, Indian fitness expos. Word-of-mouth in a small industry travels fast.</p></div>
+      <div class="card"><b style="font-family:var(--disp)">Phase C · Chain partnerships</b><p style="font-size:.9rem;color:var(--ink-soft);margin:6px 0 0">Cult.fit-scale chains, franchise networks, and boutique gym groups. Enterprise pricing, integration engineering.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== 10 · DEFENSIBILITY / IP =========================== -->
+<section style="background:var(--brand-bg)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="pill brand">10 · Defensibility &amp; intellectual property</span>
+      <h2 style="margin-top:14px">What's actually defensible, honestly.</h2>
+      <p class="lead">A note before the list: pure software methods vary widely in patentability across jurisdictions, and this section is not legal advice. The right move is to pilot the product, document every novel technical process carefully as you build, and take a full workup to a patent attorney experienced in software claims. Below is what looks like the strongest raw material for that conversation.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <span class="pill brand">CANDIDATE 01 · METHOD</span>
+        <h4 style="margin:10px 0 6px;font-size:1.1rem">Adherence-gated plan adjustment</h4>
+        <p style="font-size:.92rem;color:var(--ink-soft);margin:0">A method by which a nutrition or training plan's numerical parameters are only adjusted when a computed adherence score exceeds a threshold, with sub-threshold cases routed to a behavioral intervention workflow instead. Novel because virtually every existing tool adjusts on outcome alone.</p>
+      </div>
+      <div class="card">
+        <span class="pill brand">CANDIDATE 02 · METHOD</span>
+        <h4 style="margin:10px 0 6px;font-size:1.1rem">Cross-engine calorie coupling</h4>
+        <p style="font-size:.92rem;color:var(--ink-soft);margin:0">A method by which a nutrition plan's macronutrient targets for a given day are automatically modulated based on the intensity classification of that day's coupled training plan, executed via a shared member state object.</p>
+      </div>
+      <div class="card">
+        <span class="pill brand">CANDIDATE 03 · METHOD</span>
+        <h4 style="margin:10px 0 6px;font-size:1.1rem">Individualized TDEE regression from rolling logs</h4>
+        <p style="font-size:.92rem;color:var(--ink-soft);margin:0">A method for computing an individual's actual metabolic rate on a rolling weekly basis from logged intake and weight data, replacing population-formula estimates once statistical significance is reached, and using this recalibrated value as the input to subsequent plan generation.</p>
+      </div>
+      <div class="card">
+        <span class="pill brand">CANDIDATE 04 · METHOD</span>
+        <h4 style="margin:10px 0 6px;font-size:1.1rem">Structured memory extraction from conversational logs</h4>
+        <p style="font-size:.92rem;color:var(--ink-soft);margin:0">A method for post-hoc extracting durable member attributes (preferences, constraints, injury flags, life events) from unstructured WhatsApp conversations into structured profile fields that condition subsequent plan generation.</p>
+      </div>
+    </div>
+
+    <h4 style="margin:26px 0 10px;font-size:1.1rem">Beyond patents — the three real defenses</h4>
+    <div class="grid g3">
+      <div class="card"><b style="font-family:var(--disp);color:var(--brand)">Trade secret</b><p style="font-size:.9rem;color:var(--ink-soft);margin:6px 0 0">The Trend Library, the protocol scoring, the churn model's features — kept internal, updated quarterly.</p></div>
+      <div class="card"><b style="font-family:var(--disp);color:var(--brand)">Trademark</b><p style="font-size:.9rem;color:var(--ink-soft);margin:6px 0 0">KEYSTONE, plus branded feature names ("Metabolic Twin," "Fatigue Guardian," "Trend Library"). File early.</p></div>
+      <div class="card"><b style="font-family:var(--disp);color:var(--brand)">Data moat</b><p style="font-size:.9rem;color:var(--ink-soft);margin:6px 0 0">Not patentable, but the strongest of the three. Cross-gym learning is a compounding advantage no competitor can copy.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== 11 · ROADMAP =========================== -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="num">11 — Roadmap</div>
+      <h2>Build in five phases.</h2>
+      <p class="lead">Sequenced so paid product ships fast, and each phase is independently valuable. No big-bang release.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="phase"><span class="pn" style="background:var(--brand)">PHASE 0 · MONTH 1–2</span>
+        <h4>Foundation</h4>
+        <div class="subttl">The unsexy base everything sits on</div>
+        <ul><li>Shared member brain (database schema)</li><li>WhatsApp Business API integration</li><li>Sync layer with existing gym-management tools</li><li>Basic coach dashboard scaffolding</li></ul>
+      </div>
+      <div class="phase"><span class="pn" style="background:var(--diet)">PHASE 1 · MONTH 2–4</span>
+        <h4>Diet Engine v1</h4>
+        <div class="subttl">First paid product ships</div>
+        <ul><li>Intake, macro engine, protocol library</li><li>Metabolic Twin baseline</li><li>Note field parsing</li><li>Branded PDF + WhatsApp delivery</li><li>Trainer approval workflow</li></ul>
+      </div>
+      <div class="phase"><span class="pn" style="background:var(--work)">PHASE 2 · MONTH 4–7</span>
+        <h4>Training Engine v1</h4>
+        <div class="subttl">Second paid product</div>
+        <ul><li>Trend Library (6 protocols at launch)</li><li>Fatigue Guardian + auto-progression</li><li>Movement library + form videos</li><li>WhatsApp logging flow</li><li>Diet/training coupling</li></ul>
+      </div>
+      <div class="phase"><span class="pn" style="background:var(--crm)">PHASE 3 · MONTH 6–9</span>
+        <h4>Retention Engine full</h4>
+        <div class="subttl">The ecosystem lock-in</div>
+        <ul><li>Memory extraction pipeline</li><li>Ritual Engine</li><li>Churn prediction v1</li><li>Send-a-win workflow</li><li>Concierge bot</li></ul>
+      </div>
+      <div class="phase" style="grid-column:1/-1"><span class="pn" style="background:var(--energy)">PHASE 4 · MONTH 9–12</span>
+        <h4>Scale &amp; flywheel</h4>
+        <div class="subttl">Turn the moat on</div>
+        <ul><li>Cross-gym learning layer (privacy-preserved)</li><li>Trend Library expansion (16+ protocols)</li><li>Multi-gym / chain features</li><li>Enterprise integrations</li><li>Analytics &amp; benchmarking for gym owners</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== CLOSE =========================== -->
+<section>
+  <div class="wrap">
+    <div class="close">
+      <div class="wrap-inner">
+        <div class="eyebrow" style="color:#8577c9">The next steps</div>
+        <h2>Three things to nail before writing a single line of production code.</h2>
+        <p style="color:#C9C4B8;max-width:640px;margin:0 auto">1. Lock the brand and file the trademark. 2. Sign 3–5 anchor gyms as design partners on discounted terms. 3. Take the top four IP candidates to a software-patent attorney and get a real workup. Then Phase 0 begins.</p>
+        <a class="cta" href="#">Let's start</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="foot wrap">KEYSTONE · SAAS PROPOSAL V1 · PATENT-CANDIDATE MATERIAL · WORKING NAME · NOT LEGAL ADVICE</div>

@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// KEYSTONE accesses Firestore exclusively through the backend Admin SDK, which
+// bypasses these rules. We therefore deny ALL direct client access by default —
+// no member or coach browser ever talks to Firestore directly. If a future
+// client-side feature needs direct reads, scope them per-gym here explicitly.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
