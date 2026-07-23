@@ -28,10 +28,13 @@ export function WaitingState({
   warmup,
   requestedAt,
   kinds,
+  liveMode = "connecting",
 }: {
   warmup: WarmupRoutine | null;
   requestedAt?: string | Date | null;
   kinds?: string[];
+  /** whether updates are pushed or polled — shown so the wait feels connected */
+  liveMode?: "live" | "polling" | "connecting";
 }) {
   const [messageIndex, setMessageIndex] = useState(0);
   const [done, setDone] = useState<Record<number, boolean>>({});
@@ -65,6 +68,7 @@ export function WaitingState({
             <p className="mt-1.5 font-mono text-[10px] text-neutral-400">
               {kinds?.length ? `${kinds.join(" + ")} requested` : "Plan requested"}
               {mins !== null ? ` · ${mins === 0 ? "just now" : `${mins} min ago`}` : ""}
+              {liveMode === "live" ? " · live" : ""}
             </p>
           </div>
         </div>

@@ -13,6 +13,7 @@ import {
   useMemberAuth,
 } from "../../components/member-ui";
 import { WaitingState, type WarmupRoutine } from "../../components/waiting";
+import { usePlanRequestLive } from "../../lib/realtime";
 
 type Stage = "CHECKIN" | "REQUEST" | "WAITING" | "READY" | "RESTDAY";
 
@@ -69,13 +70,12 @@ export default function TodayPage() {
     if (ready) void load();
   }, [ready, load]);
 
-  // While the coach is deciding, keep checking. Phase 4 replaces this with a
-  // Firestore listener; polling remains the fallback so the flow never stalls.
-  useEffect(() => {
-    if (data?.stage !== "WAITING") return;
-    const id = setInterval(() => void load(), 3000);
-    return () => clearInterval(id);
-  }, [data?.stage, load]);
+  // Live: the screen flips the instant the coach approves. Falls back to polling
+  // on its own if the listener can't be established.
+  const liveMode = usePlanRequestLive(
+    data?.stage === "WAITING" ? data.request?.id : null,
+    load,
+  );
 
   async function logWeight() {
     const w = Number(weight);
@@ -185,6 +185,7 @@ export default function TodayPage() {
           warmup={data.warmup}
           requestedAt={data.request?.requestedAt}
           kinds={data.request?.kinds}
+          liveMode={liveMode}
         />
       )}
 

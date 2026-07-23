@@ -1,11 +1,48 @@
 rules_version = '2';
 
-// KEYSTONE accesses Firestore exclusively through the backend Admin SDK, which
-// bypasses these rules. We therefore deny ALL direct client access by default —
-// no member or coach browser ever talks to Firestore directly. If a future
-// client-side feature needs direct reads, scope them per-gym here explicitly.
+// KEYSTONE writes to Firestore exclusively through the backend Admin SDK, which
+// bypasses these rules entirely. Clients get NO write access and only the narrow
+// reads needed for live updates:
+//
+//   member -> their own planRequests and their own member document
+//   staff  -> the planRequests belonging to their gym
+//
+// Auth comes from custom tokens minted server-side (/api/me/realtime-token):
+// a member's uid IS their memberId, and gymId/role are signed claims, so a
+// browser cannot assert an identity it was not given.
+//
+// Everything else stays denied. If a future feature needs a direct read, add it
+// here explicitly rather than widening these rules.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isMember() {
+      return signedIn() && request.auth.token.role == 'member';
+    }
+    function isStaff() {
+      return signedIn() && request.auth.token.role == 'staff';
+    }
+    function sameGym(gymId) {
+      return signedIn() && request.auth.token.gymId == gymId;
+    }
+
+    // A member watches their own plan requests so the waiting screen flips the
+    // moment their coach approves. Staff watch their gym's queue.
+    match /planRequests/{requestId} {
+      allow read: if (isMember() && resource.data.memberId == request.auth.uid)
+                  || (isStaff() && sameGym(resource.data.gymId));
+      allow write: if false; // server only
+    }
+
+    // The member's own record — streak and tier update live.
+    match /members/{memberId} {
+      allow read: if isMember() && memberId == request.auth.uid;
+      allow write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

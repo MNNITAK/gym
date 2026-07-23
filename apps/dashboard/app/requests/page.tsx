@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api } from "../../lib/api";
+import { api, getToken } from "../../lib/api";
 import { Nav } from "../../components/nav";
 import { Button, Card, ErrorNote, SectionTitle, RiskBadge, useRequireAuth } from "../../components/ui";
 import { PlanReview, type PlanRevision } from "../../components/plan-review";
 import type { EngineDecision } from "../../components/why-panel";
+import { useRequestQueueLive } from "../../lib/realtime";
 
 interface QueueItem {
   id: string;
@@ -54,6 +55,7 @@ export default function RequestsPage() {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const gymId = useGymId();
 
   const loadQueue = useCallback(async () => {
     try {
@@ -75,13 +77,9 @@ export default function RequestsPage() {
     if (ready) void loadQueue();
   }, [ready, loadQueue]);
 
-  // New requests should appear without the coach reloading. Phase 4 swaps this
-  // for a live listener; polling is the fallback that always works.
-  useEffect(() => {
-    if (!ready) return;
-    const id = setInterval(() => void loadQueue(), 5000);
-    return () => clearInterval(id);
-  }, [ready, loadQueue]);
+  // New requests arrive without the coach reloading. Falls back to polling on
+  // its own if the listener can't be established.
+  const liveMode = useRequestQueueLive(ready ? gymId : null, loadQueue);
 
   useEffect(() => {
     if (openId) void loadDetail(openId);
@@ -119,11 +117,14 @@ export default function RequestsPage() {
               Members who have checked in and are waiting on you.
             </p>
           </div>
-          {queue.length > 0 && (
-            <span className="rounded-full bg-energy px-2.5 py-1 font-mono text-[10px] font-bold text-white">
-              {queue.length} waiting
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <LiveDot mode={liveMode} />
+            {queue.length > 0 && (
+              <span className="rounded-full bg-energy px-2.5 py-1 font-mono text-[10px] font-bold text-white">
+                {queue.length} waiting
+              </span>
+            )}
+          </div>
         </div>
         <ErrorNote error={error} />
 
@@ -322,5 +323,32 @@ function Sparkline({ points }: { points: Array<{ date: string; weightKg: number 
     <svg viewBox={`0 0 ${w} ${h}`} className="mt-2 w-full" preserveAspectRatio="none" role="img" aria-label="Weight trend">
       <path d={d} fill="none" stroke="#12995A" strokeWidth="2" strokeLinecap="round" />
     </svg>
+  );
+}
+
+/** The gym a coach belongs to, read from their signed token. */
+function useGymId(): string | null {
+  const [gymId, setGymId] = useState<string | null>(null);
+  useEffect(() => {
+    const t = getToken();
+    if (!t) return;
+    try {
+      setGymId(JSON.parse(atob(t.split(".")[1]!)).gymId ?? null);
+    } catch {
+      setGymId(null);
+    }
+  }, []);
+  return gymId;
+}
+
+/** Shows whether updates are pushed or polled — useful when demoing. */
+function LiveDot({ mode }: { mode: "live" | "polling" | "connecting" }) {
+  const label = mode === "live" ? "Live" : mode === "polling" ? "Auto-refresh" : "Connecting";
+  const tone = mode === "live" ? "text-diet" : "text-neutral-400";
+  return (
+    <span className={`flex items-center gap-1.5 font-mono text-[10px] ${tone}`}>
+      <span className={`inline-block h-1.5 w-1.5 rounded-full ${mode === "live" ? "bg-diet" : "bg-neutral-300"}`} />
+      {label}
+    </span>
   );
 }

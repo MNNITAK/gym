@@ -16,6 +16,8 @@
     "@keystone/whatsapp": "workspace:*",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.7",
+    "firebase": "^12.16.0",
+    "firebase-admin": "^13.0.2",
     "jsonwebtoken": "^9.0.2",
     "next": "^15.1.4",
     "pdfkit": "^0.15.2",
