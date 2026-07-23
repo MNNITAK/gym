@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { getApps, initializeApp, applicationDefault, cert } from "firebase-admin/app";
 import {
   getFirestore,
@@ -33,6 +34,25 @@ function serviceAccountFromEnv(): Record<string, string> | null {
   }
 }
 
+/**
+ * Copying a local .env into a serverless host carries GOOGLE_APPLICATION_CREDENTIALS
+ * with it — a path like "C:/…/service-account.json" that cannot exist there. The
+ * Admin SDK's own failure for that is an opaque `ENOENT … lstat '/var/task/…/C:'`,
+ * so catch it here and say what to do instead.
+ */
+function assertUsableCredentialsFile(): void {
+  const path = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (!path || existsSync(path)) return;
+
+  throw new Error(
+    `GOOGLE_APPLICATION_CREDENTIALS points at "${path}", which does not exist on this machine. ` +
+      `A serverless host has no filesystem for a key file. Set FIREBASE_SERVICE_ACCOUNT to the ` +
+      `service-account JSON itself (raw or base64) and REMOVE GOOGLE_APPLICATION_CREDENTIALS from ` +
+      `the deployment's environment variables. Generate the value with: ` +
+      `node scripts/print-service-account-env.mjs`,
+  );
+}
+
 export function getDb(): Firestore {
   if (_db) return _db;
   if (!getApps().length) {
@@ -46,6 +66,8 @@ export function getDb(): Firestore {
     }
     // Prefer an inline service account (serverless), else GOOGLE_APPLICATION_CREDENTIALS
     // / the ambient Application Default Credentials on the host.
+    if (!svc) assertUsableCredentialsFile();
+
     initializeApp({
       credential: svc
         ? cert({
