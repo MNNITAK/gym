@@ -51,8 +51,8 @@ export default function RetentionPage() {
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-4xl px-6 py-10">
-        <h1 className="text-2xl font-extrabold tracking-tight">Retention</h1>
+      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
+        <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">Retention</h1>
         <p className="mt-1 text-sm text-neutral-600">
           Intervene at ~day 20 of a downward trend, not day 90.
         </p>
@@ -108,8 +108,8 @@ export default function RetentionPage() {
             )}
             {patterns.map((p) => (
               <Card key={p.id}>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-mono text-xs">{p.cohort}</p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="break-anywhere font-mono text-xs">{p.cohort}</p>
                   <p className="text-sm">
                     <span className="font-bold text-diet">
                       {(p.successRate * 100).toFixed(0)}%

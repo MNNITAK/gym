@@ -104,10 +104,10 @@ export default function ApprovalsPage() {
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-4xl px-6 py-10">
+      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
         <div className="flex items-baseline justify-between">
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight">Approvals</h1>
+            <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">Approvals</h1>
             <p className="mt-1 text-sm text-neutral-600">
               The coach gate. Nothing here has reached the member yet.
             </p>
@@ -124,7 +124,7 @@ export default function ApprovalsPage() {
             {plans.length === 0 && <p className="text-sm text-neutral-400">Nothing pending.</p>}
             {plans.map((p) => (
               <Card key={p.id}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <p className="font-semibold">
                       {p.member?.name ?? "Unknown member"}{" "}
@@ -140,7 +140,7 @@ export default function ApprovalsPage() {
                       <p className="mt-1 text-sm text-neutral-600">{p.rationale}</p>
                     )}
                   </div>
-                  <div className="flex shrink-0 gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button size="sm" tone="ghost" onClick={() => setOpen(open === p.id ? null : p.id)}>
                       {open === p.id ? "Hide" : "Review & revise"}
                     </Button>
@@ -164,7 +164,7 @@ export default function ApprovalsPage() {
             {messages.length === 0 && <p className="text-sm text-neutral-400">Nothing pending.</p>}
             {messages.map((m) => (
               <Card key={m.id}>
-                <p className="text-xs text-neutral-500">
+                <p className="break-anywhere text-xs text-neutral-500">
                   {m.member?.name} · {m.member?.whatsappPhone}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap text-sm">{m.body}</p>

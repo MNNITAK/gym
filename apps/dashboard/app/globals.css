@@ -4,9 +4,39 @@
 
 :root {
   color-scheme: light;
+  /* Notch / home-indicator insets, 0 on devices without them. */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 body {
   background: #f7f6f2;
   color: #100e0a;
+  /* Nothing should ever force a horizontal scrollbar on a phone. */
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* iOS zooms the whole page when focusing an input under 16px. Keeping the
+   rendered size at 16px avoids that jump without making the UI look oversized. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Comfortable tap targets on touch devices (WCAG asks for ~44px). */
+@media (pointer: coarse) {
+  button,
+  a[role="button"] {
+    min-height: 40px;
+  }
+}
+
+/* Long words (member emails, protocol slugs) must wrap rather than widen the page. */
+.break-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }

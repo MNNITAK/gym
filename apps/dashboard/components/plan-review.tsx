@@ -125,7 +125,7 @@ export function PlanReview({
       </div>
 
       {showJson && (
-        <pre className="mt-3 max-h-72 overflow-auto rounded-lg bg-neutral-900 p-4 text-[11px] leading-relaxed text-neutral-100">
+        <pre className="mt-3 max-h-72 max-w-full overflow-auto whitespace-pre-wrap break-all rounded-lg bg-neutral-900 p-4 text-[11px] leading-relaxed text-neutral-100">
           {JSON.stringify(plan.payload, null, 2)}
         </pre>
       )}

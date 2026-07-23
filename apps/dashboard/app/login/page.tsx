@@ -30,8 +30,8 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-sm px-6 py-24">
-      <h1 className="text-2xl font-extrabold tracking-tight">Coach sign in</h1>
+    <main className="mx-auto max-w-sm px-4 py-16 sm:px-6 sm:py-24">
+      <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">Coach sign in</h1>
       <p className="mt-1 text-sm text-neutral-500">
         Demo — coach@demo.gym / keystone-demo
       </p>

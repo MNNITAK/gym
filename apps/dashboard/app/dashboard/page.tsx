@@ -85,8 +85,8 @@ export default function DashboardPage() {
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <h1 className="text-2xl font-extrabold tracking-tight">Gym overview</h1>
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+        <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">Gym overview</h1>
         <p className="mt-1 text-sm text-neutral-600">
           Three AI engines on one shared member brain. Nothing reaches a member without a coach.
         </p>

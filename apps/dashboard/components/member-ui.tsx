@@ -42,9 +42,13 @@ export function MemberShell({
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-paper pb-24">
+    <div
+      className="min-h-screen bg-paper"
+      // Clear the fixed tab bar plus any home-indicator inset.
+      style={{ paddingBottom: "calc(5.5rem + var(--safe-bottom))" }}
+    >
       <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-5 py-3">
+        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3 sm:px-5">
           <Link href="/app" className="font-mono text-[10px] uppercase tracking-widest text-brand">
             KEYSTONE
           </Link>
@@ -64,11 +68,13 @@ export function MemberShell({
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-5 py-6">
+      <main className="mx-auto max-w-2xl px-4 py-5 sm:px-5 sm:py-6">
         {(title || action) && (
-          <div className="mb-5 flex items-start justify-between gap-3">
-            <div>
-              {title && <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>}
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              {title && (
+                <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">{title}</h1>
+              )}
               {subtitle && <p className="mt-1 text-sm text-neutral-600">{subtitle}</p>}
             </div>
             {action}
@@ -77,7 +83,10 @@ export function MemberShell({
         {children}
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-neutral-200 bg-white">
+      <nav
+        className="fixed inset-x-0 bottom-0 z-20 border-t border-neutral-200 bg-white"
+        style={{ paddingBottom: "var(--safe-bottom)" }}
+      >
         <div className="mx-auto flex max-w-2xl">
           {TABS.map((t) => {
             const active = t.href === "/app" ? pathname === "/app" : pathname.startsWith(t.href);
@@ -85,11 +94,13 @@ export function MemberShell({
               <Link
                 key={t.href}
                 href={t.href}
-                className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold transition ${
+                className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-semibold transition ${
                   active ? "text-ink" : "text-neutral-400"
                 }`}
               >
-                <span className={`text-lg ${active ? "" : "opacity-60"}`}>{t.icon}</span>
+                <span className={`text-lg leading-none ${active ? "" : "opacity-60"}`}>
+                  {t.icon}
+                </span>
                 {t.label}
               </Link>
             );

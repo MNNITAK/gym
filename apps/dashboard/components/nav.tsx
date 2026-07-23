@@ -18,18 +18,36 @@ export function Nav() {
 
   return (
     <header className="border-b border-neutral-200 bg-white">
-      <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-4">
-        <Link href="/dashboard" className="font-mono text-xs uppercase tracking-widest text-brand">
-          KEYSTONE
-        </Link>
-        <nav className="flex flex-1 gap-1">
+      <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/dashboard"
+            className="font-mono text-xs uppercase tracking-widest text-brand"
+          >
+            KEYSTONE
+          </Link>
+          <div className="flex-1" />
+          <button
+            onClick={() => {
+              clearToken();
+              router.push("/login");
+            }}
+            className="text-sm text-neutral-500 hover:text-ink"
+          >
+            Sign out
+          </button>
+        </div>
+
+        {/* On a phone the tabs drop to their own row and scroll sideways rather
+            than squashing or wrapping into an unusable pile. */}
+        <nav className="-mx-4 mt-2 flex gap-1 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:mt-3 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {LINKS.map((l) => {
             const active = pathname === l.href || pathname.startsWith(`${l.href}/`);
             return (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition sm:px-4 ${
                   active ? "bg-ink text-white" : "text-neutral-600 hover:bg-neutral-100"
                 }`}
               >
@@ -38,15 +56,6 @@ export function Nav() {
             );
           })}
         </nav>
-        <button
-          onClick={() => {
-            clearToken();
-            router.push("/login");
-          }}
-          className="text-sm text-neutral-500 hover:text-ink"
-        >
-          Sign out
-        </button>
       </div>
     </header>
   );

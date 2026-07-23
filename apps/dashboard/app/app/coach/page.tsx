@@ -179,26 +179,30 @@ function CoachInner() {
         </div>
       )}
 
-      {/* Composer */}
-      <div className="fixed inset-x-0 bottom-[60px] border-t border-neutral-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-2xl gap-2 px-5 py-3">
+      {/* Composer — sits directly above the tab bar, clear of the home indicator */}
+      <div
+        className="fixed inset-x-0 z-20 border-t border-neutral-200 bg-white/95 backdrop-blur"
+        style={{ bottom: "calc(3.25rem + var(--safe-bottom))" }}
+      >
+        <div className="mx-auto flex max-w-2xl gap-2 px-4 py-2.5 sm:px-5">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send(input)}
             placeholder={`Message ${meta.name}…`}
-            className="flex-1 rounded-full border border-neutral-300 px-4 py-2.5 text-sm"
+            className="min-w-0 flex-1 rounded-full border border-neutral-300 px-4 py-2.5 text-sm"
           />
           <button
             onClick={() => send(input)}
             disabled={busy || !input.trim()}
-            className={`rounded-full px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40 ${meta.accent}`}
+            className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40 ${meta.accent}`}
           >
             Send
           </button>
         </div>
       </div>
-      <div className="h-16" />
+      {/* Spacer so the last message isn't hidden behind the composer. */}
+      <div className="h-14" />
     </MemberShell>
   );
 }

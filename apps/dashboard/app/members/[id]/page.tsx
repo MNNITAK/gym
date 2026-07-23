@@ -98,13 +98,13 @@ export default function MemberPage({ params }: { params: Promise<{ id: string }>
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-6xl px-6 py-10">
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
         <Link href="/members" className="text-sm text-neutral-500 hover:text-ink">
           ← Members
         </Link>
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight">{m?.name ?? "…"}</h1>
+          <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">{m?.name ?? "…"}</h1>
           {m && (
             <>
               <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-mono text-[10px] font-bold text-neutral-600">
@@ -115,7 +115,7 @@ export default function MemberPage({ params }: { params: Promise<{ id: string }>
             </>
           )}
         </div>
-        <p className="mt-1 text-sm text-neutral-500">
+        <p className="break-anywhere mt-1 text-sm text-neutral-500">
           {m?.whatsappPhone} · {m?.goal ?? "no goal set"}
         </p>
 

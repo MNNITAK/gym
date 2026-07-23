@@ -74,8 +74,8 @@ export default function LibraryPage() {
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-5xl px-6 py-10">
-        <h1 className="text-2xl font-extrabold tracking-tight">Movement library</h1>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+        <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">Movement library</h1>
         <p className="mt-1 text-sm text-neutral-600">
           Curated by a strength &amp; conditioning specialist — the AI selects from this, it
           never invents programming. Each movement carries coaching cues, the mistakes

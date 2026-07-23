@@ -4,9 +4,9 @@ import Link from "next/link";
 // member and a coach are equally likely to land here, so both get a door.
 export default function Home() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
+    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
       <p className="font-mono text-xs uppercase tracking-widest text-brand">KEYSTONE</p>
-      <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-ink">
+      <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
         The operating system for gyms that keep members for life.
       </h1>
       <p className="mt-4 max-w-xl text-neutral-600">
