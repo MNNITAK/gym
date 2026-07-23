@@ -12,8 +12,16 @@ import {
   onSnapshot,
   type Firestore,
 } from "firebase/firestore";
-import { getMemberToken } from "./member-api";
+import { getMemberToken, meApi } from "./member-api";
 import { getToken as getStaffToken } from "./api";
+
+// Polling discipline: the fallback used to re-fetch the member's entire Today
+// payload every 3 seconds — ~400 Firestore reads a tick, which exhausted the
+// free tier's 50k daily reads in minutes. The poll now asks a status-only
+// question (one or two document reads) and triggers the heavy reload ONLY when
+// the status actually changed.
+const MEMBER_POLL_MS = 10_000;
+const STAFF_POLL_MS = 15_000;
 
 // ── Live updates ─────────────────────────────────────────────────────────────
 // The member's waiting screen and the coach's queue both need to react the
@@ -105,10 +113,25 @@ export function usePlanRequestLive(
     let poll: ReturnType<typeof setInterval> | undefined;
     let cancelled = false;
 
+    // Cheap poll: read just the request's status; reload the screen only when
+    // it flips. lastStatus starts undefined so the first tick establishes a
+    // baseline without a reload (the page already has fresh data).
+    let lastStatus: string | null | undefined;
+    const checkStatus = async () => {
+      try {
+        const res = await meApi<{ request: { status: string } | null }>("/plan-request");
+        const status = res.request?.status ?? null;
+        if (lastStatus !== undefined && status !== lastStatus) cb.current();
+        lastStatus = status;
+      } catch {
+        /* transient failure — next tick will try again */
+      }
+    };
+
     const startPolling = () => {
       if (cancelled || poll) return;
       setMode("polling");
-      poll = setInterval(() => cb.current(), 3000);
+      poll = setInterval(() => void checkStatus(), MEMBER_POLL_MS);
     };
 
     connect("member")
@@ -152,7 +175,7 @@ export function useRequestQueueLive(gymId: string | null | undefined, onChange: 
     const startPolling = () => {
       if (cancelled || poll) return;
       setMode("polling");
-      poll = setInterval(() => cb.current(), 5000);
+      poll = setInterval(() => cb.current(), STAFF_POLL_MS);
     };
 
     connect("staff")

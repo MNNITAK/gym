@@ -89,7 +89,7 @@ export const gyms = {
     const cached = requestCache.get<Gym | null>(key);
     if (cached !== undefined) return cached;
     const gym = await getById<Gym>(COLLECTIONS.gyms, slug);
-    requestCache.set(key, gym, 15_000);
+    requestCache.set(key, gym, 60_000);
     return gym;
   },
   async findByPhoneNumberId(phoneNumberId: string): Promise<Gym | null> {
@@ -326,9 +326,40 @@ export const logs = {
     return created;
   },
   async listByMemberTypesSince(memberId: string, types: LogType[], since: Date): Promise<Log[]> {
-    const all = await logs.allByMember(memberId);
     const typeSet = new Set(types);
-    return all.filter((l) => typeSet.has(l.type) && l.loggedFor.getTime() >= since.getTime());
+    return (await logs.byMemberSince(memberId, since)).filter((l) => typeSet.has(l.type));
+  },
+  /**
+   * Logs since a date, bounded SERVER-SIDE via the (memberId, loggedFor)
+   * composite index. This is the read-quota fix: a member's history grows
+   * daily, and the unbounded scan below was fetching all of it (~350+ docs)
+   * on every screen. Falls back to the scan if the index hasn't finished
+   * building, so a fresh deployment degrades to slow, never to broken.
+   */
+  async byMemberSince(memberId: string, since: Date): Promise<Log[]> {
+    const dayBucket = Math.floor(since.getTime() / 864e5);
+    const key = `logs:${memberId}:since:${dayBucket}`;
+    const cached = requestCache.get<Log[]>(key);
+    if (cached) return cached;
+    try {
+      const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.logs)
+          .where("memberId", "==", memberId)
+          .where("loggedFor", ">=", since)
+          .get(),
+      );
+      const list = snap.docs
+        .map((d) => toModel<Log>(d))
+        .sort((a, b) => a.loggedFor.getTime() - b.loggedFor.getTime());
+      requestCache.set(key, list, 15_000);
+      return list;
+    } catch (e) {
+      // FAILED_PRECONDITION = composite index missing/building.
+      if ((e as { code?: number }).code !== 9) throw e;
+      const all = await logs.allByMember(memberId);
+      return all.filter((l) => l.loggedFor.getTime() >= since.getTime());
+    }
   },
   /**
    * Every log for a member, oldest first, memoised for the life of one request.
@@ -353,10 +384,9 @@ export const logs = {
     return list;
   },
   async countByMemberBetween(memberId: string, from: Date, to?: Date): Promise<number> {
-    const all = await logs.allByMember(memberId);
-    const fromMs = from.getTime();
+    const since = await logs.byMemberSince(memberId, from);
     const toMs = to?.getTime() ?? Infinity;
-    return all.filter((l) => l.loggedFor.getTime() >= fromMs && l.loggedFor.getTime() < toMs).length;
+    return since.filter((l) => l.loggedFor.getTime() < toMs).length;
   },
   /**
    * Write many logs in batched commits. Seeding a month of history one document
@@ -380,8 +410,10 @@ export const logs = {
   },
   /** Most-recent WEIGHT log value for a member (milestone detection). */
   async latestWeightKg(memberId: string): Promise<number | null> {
-    const all = await logs.allByMember(memberId);
-    const latest = all.filter((l) => l.type === "WEIGHT").at(-1);
+    // A recent window is enough — a weight older than 180 days shouldn't
+    // steer anything anyway, and this keeps the read bounded.
+    const recent = await logs.byMemberSince(memberId, new Date(Date.now() - 180 * 864e5));
+    const latest = recent.filter((l) => l.type === "WEIGHT").at(-1);
     const w = (latest?.payload as { weightKg?: number } | undefined)?.weightKg;
     return typeof w === "number" ? w : null;
   },
