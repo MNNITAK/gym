@@ -65,7 +65,13 @@ export default function MemberLoginPage() {
         </button>
       </form>
 
-      <p className="mt-6 font-mono text-[10px] text-neutral-400">
+      <p className="mt-6 text-center text-sm text-neutral-500">
+        New here?{" "}
+        <a href="/app/register" className="font-semibold text-ink underline">
+          Create an account
+        </a>
+      </p>
+      <p className="mt-4 text-center font-mono text-[10px] text-neutral-400">
         Demo — 9000000001 / member-demo
       </p>
     </main>

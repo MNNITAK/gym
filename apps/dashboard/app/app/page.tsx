@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { meApi, getMemberName } from "../../lib/member-api";
 import {
   MemberShell,
@@ -13,6 +14,7 @@ import {
 } from "../../components/member-ui";
 
 interface Today {
+  needsOnboarding?: boolean;
   member: {
     name: string;
     tier: string;
@@ -37,6 +39,7 @@ const GREETING = () => {
 
 export default function TodayPage() {
   const ready = useMemberAuth();
+  const router = useRouter();
   const [data, setData] = useState<Today | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -44,11 +47,16 @@ export default function TodayPage() {
 
   const load = useCallback(async () => {
     try {
-      setData(await meApi<Today>("/today"));
+      const res = await meApi<Today>("/today");
+      if (res.needsOnboarding) {
+        router.replace("/app/onboarding");
+        return;
+      }
+      setData(res);
     } catch (e) {
       setError((e as Error).message);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (ready) void load();

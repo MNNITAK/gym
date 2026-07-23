@@ -177,6 +177,10 @@ async function main() {
       renewalDate: daysAhead(d.renewalInDays),
       coachId: coach?.id ?? null,
       passwordHash,
+      // Seeded members arrive with a full profile and a month of history, so
+      // they must not be routed into onboarding — that flow is for new signups.
+      onboardedAt: daysAgo(d.joinedDaysAgo),
+      preferredTrainingTime: "18:00",
     });
 
     // ── 30 days of history ──

@@ -102,6 +102,10 @@ export const COLLECTIONS = {
   conversationTurns: "conversationTurns",
   outboundMessages: "outboundMessages",
   anonymizedPatterns: "anonymizedPatterns",
+  onboardingSessions: "onboardingSessions",
+  dailyCheckins: "dailyCheckins",
+  planRequests: "planRequests",
+  measurements: "measurements",
 } as const;
 
 // ── (De)serialization: convert Firestore Timestamps ⇄ JS Dates ───────────────

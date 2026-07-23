@@ -9,3 +9,4 @@ export * from "./engines/diet.js";
 export * from "./engines/training.js";
 export * from "./engines/retention.js";
 export * from "./agents/registry.js";
+export * from "./agents/onboarding.js";

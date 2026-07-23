@@ -26,6 +26,10 @@ import type {
   Ritual,
   RitualCompletion,
   StaffUser,
+  OnboardingSession,
+  DailyCheckin,
+  PlanRequest,
+  Measurement,
 } from "./types.js";
 
 // ── Generic helpers ──────────────────────────────────────────────────────────
@@ -638,6 +642,112 @@ export const ritualCompletions = {
   },
 };
 
+// ── Onboarding (one session per member) ──────────────────────────────────────
+export const onboardingSessions = {
+  get(memberId: string): Promise<OnboardingSession | null> {
+    return getById<OnboardingSession>(COLLECTIONS.onboardingSessions, memberId);
+  },
+  /** docId = memberId, so a member can only ever have one session. */
+  start(data: Omit<OnboardingSession, "id" | "createdAt">): Promise<OnboardingSession> {
+    return createDoc<OnboardingSession>(COLLECTIONS.onboardingSessions, data, data.memberId);
+  },
+  update(memberId: string, data: Partial<OnboardingSession>): Promise<OnboardingSession> {
+    return updateDoc<OnboardingSession>(
+      COLLECTIONS.onboardingSessions,
+      memberId,
+      data as Record<string, unknown>,
+    );
+  },
+};
+
+// ── Daily check-ins ──────────────────────────────────────────────────────────
+export const dailyCheckins = {
+  /** Idempotent per member/day — the same pattern as ritualCompletions. */
+  upsert(
+    data: Omit<DailyCheckin, "id" | "createdAt">,
+  ): Promise<DailyCheckin> {
+    return createDoc<DailyCheckin>(
+      COLLECTIONS.dailyCheckins,
+      data,
+      docId(data.memberId, data.forDay),
+    );
+  },
+  forDay(memberId: string, forDay: string): Promise<DailyCheckin | null> {
+    return getById<DailyCheckin>(COLLECTIONS.dailyCheckins, docId(memberId, forDay));
+  },
+  /** Recent check-ins, newest first — history + "what did they say yesterday". */
+  async recentByMember(memberId: string, n = 14): Promise<DailyCheckin[]> {
+    const snap = await getDb()
+      .collection(COLLECTIONS.dailyCheckins)
+      .where("memberId", "==", memberId)
+      .get();
+    return snap.docs
+      .map((d) => toModel<DailyCheckin>(d))
+      .sort((a, b) => (a.forDay < b.forDay ? 1 : -1))
+      .slice(0, n);
+  },
+};
+
+// ── Plan requests (member asks, coach decides) ───────────────────────────────
+export const planRequests = {
+  get(id: string): Promise<PlanRequest | null> {
+    return getById<PlanRequest>(COLLECTIONS.planRequests, id);
+  },
+  /** One request per member per day; re-requesting reuses the same document. */
+  create(data: Omit<PlanRequest, "id" | "createdAt">): Promise<PlanRequest> {
+    return createDoc<PlanRequest>(
+      COLLECTIONS.planRequests,
+      data,
+      docId(data.memberId, data.forDay),
+    );
+  },
+  update(id: string, data: Partial<PlanRequest>): Promise<PlanRequest> {
+    return updateDoc<PlanRequest>(COLLECTIONS.planRequests, id, data as Record<string, unknown>);
+  },
+  forDay(memberId: string, forDay: string): Promise<PlanRequest | null> {
+    return getById<PlanRequest>(COLLECTIONS.planRequests, docId(memberId, forDay));
+  },
+  /** The coach's queue: everything still awaiting a decision, oldest first. */
+  async openByGym(gymId: string): Promise<PlanRequest[]> {
+    const snap = await getDb()
+      .collection(COLLECTIONS.planRequests)
+      .where("gymId", "==", gymId)
+      .get();
+    const open = new Set(["REQUESTED", "IN_REVIEW", "DRAFTED"]);
+    return snap.docs
+      .map((d) => toModel<PlanRequest>(d))
+      .filter((r) => open.has(r.status))
+      .sort((a, b) => a.requestedAt.getTime() - b.requestedAt.getTime());
+  },
+  async recentByGym(gymId: string, n = 40): Promise<PlanRequest[]> {
+    const snap = await getDb()
+      .collection(COLLECTIONS.planRequests)
+      .where("gymId", "==", gymId)
+      .get();
+    return snap.docs
+      .map((d) => toModel<PlanRequest>(d))
+      .sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime())
+      .slice(0, n);
+  },
+};
+
+// ── Measurements ─────────────────────────────────────────────────────────────
+export const measurements = {
+  create(data: Omit<Measurement, "id" | "createdAt">): Promise<Measurement> {
+    return createDoc<Measurement>(COLLECTIONS.measurements, data);
+  },
+  async listByMember(memberId: string, n = 60): Promise<Measurement[]> {
+    const snap = await getDb()
+      .collection(COLLECTIONS.measurements)
+      .where("memberId", "==", memberId)
+      .get();
+    return snap.docs
+      .map((d) => toModel<Measurement>(d))
+      .sort((a, b) => a.takenOn.getTime() - b.takenOn.getTime())
+      .slice(-n);
+  },
+};
+
 // ── Maintenance (demo reset only) ────────────────────────────────────────────
 /**
  * Delete every document in a collection matching one equality filter.
@@ -681,6 +791,10 @@ export async function purgeMemberData(memberId: string): Promise<number> {
     COLLECTIONS.conversationTurns,
     COLLECTIONS.outboundMessages,
     COLLECTIONS.ritualCompletions,
+    COLLECTIONS.onboardingSessions,
+    COLLECTIONS.dailyCheckins,
+    COLLECTIONS.planRequests,
+    COLLECTIONS.measurements,
   ];
   let total = 0;
   for (const c of collections) total += await deleteWhere(c, "memberId", memberId);

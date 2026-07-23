@@ -74,6 +74,8 @@ export interface Gym extends WithId, Timestamps {
   whatsappBusinessId?: string | null;
   syncProvider?: string | null;
   syncConfig?: Record<string, unknown> | null;
+  /** Short code members type when signing themselves up. */
+  joinCode?: string | null;
   /** Facts the concierge bot answers from: class times, fees, policies. */
   classSchedule?: Array<{ name: string; day: string; time: string; coach?: string }> | null;
   policies?: Record<string, string> | null;
@@ -106,6 +108,10 @@ export interface Member extends WithId, Timestamps {
   coachId?: string | null;
   /** Members sign in to their own panel; phone is the username. */
   passwordHash?: string | null;
+  /** Set once conversational onboarding completes; gates the panel until then. */
+  onboardedAt?: Date | null;
+  /** Preferred training time "HH:MM", used when laying out the day. */
+  preferredTrainingTime?: string | null;
   /** Hybrid Athlete mode: the event being peaked for. */
   eventDate?: Date | null;
   eventName?: string | null;
@@ -241,6 +247,76 @@ export interface RitualCompletion extends WithId {
   ritualId: string;
   forDay: string; // "YYYY-MM-DD"
   response?: string | null;
+  createdAt: Date;
+}
+
+/** One member's conversational onboarding, one document per member. */
+export interface OnboardingSession extends WithId {
+  gymId: string;
+  memberId: string;
+  status: "IN_PROGRESS" | "COMPLETE";
+  /** field key -> the member's answer, in their own words */
+  collected: Record<string, string>;
+  askedKeys: string[];
+  completedAt?: Date | null;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+/** The daily check-in that must happen before today's plan is requested. */
+export interface DailyCheckin extends WithId {
+  gymId: string;
+  memberId: string;
+  /** "YYYY-MM-DD" in the gym's timezone */
+  forDay: string;
+  /** question key -> answer */
+  answers: Record<string, string | number>;
+  /** one-line summary the coach reads */
+  summary?: string | null;
+  status: "STARTED" | "COMPLETE";
+  createdAt: Date;
+  completedAt?: Date | null;
+}
+
+export type PlanRequestStatus =
+  | "REQUESTED"
+  | "IN_REVIEW"
+  | "DRAFTED"
+  | "APPROVED"
+  | "DECLINED";
+
+/** A member asking their coach for today's plan. Never auto-generates. */
+export interface PlanRequest extends WithId {
+  gymId: string;
+  memberId: string;
+  memberName: string;
+  forDay: string;
+  kinds: PlanType[];
+  status: PlanRequestStatus;
+  checkinId?: string | null;
+  planIds: string[];
+  /** what the AI suggests the coach should do, from the check-in */
+  aiSuggestion?: string | null;
+  note?: string | null;
+  requestedAt: Date;
+  respondedAt?: Date | null;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+/** Body measurements beyond weight. */
+export interface Measurement extends WithId {
+  gymId: string;
+  memberId: string;
+  takenOn: Date;
+  weightKg?: number | null;
+  waistCm?: number | null;
+  chestCm?: number | null;
+  armCm?: number | null;
+  hipCm?: number | null;
+  thighCm?: number | null;
+  bodyFatPct?: number | null;
+  note?: string | null;
   createdAt: Date;
 }
 

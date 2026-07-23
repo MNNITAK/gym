@@ -248,23 +248,26 @@ async function seedActivity(
   // Energy balance drives the weight trend, so the regression can recover trueTdee.
   const kgPerDay = (intake - trueTdee) / 7700;
   let weight = member.startWeightKg ?? 80;
+  // Accumulate and write in batched commits — one await per document made this
+  // seed take minutes against a remote project.
+  const pending: Array<Parameters<typeof repos.logs.create>[0]> = [];
 
   for (let i = days; i >= 0; i--) {
     const day = daysAgo(i);
     // A disengaged member simply stops logging in the last stretch.
     if (!opts.engaged && i < Math.floor(days * 0.45)) continue;
 
-    await repos.logs.create({
+    pending.push({
       gymId, memberId: member.id, type: "INTAKE", loggedFor: day,
       payload: { kcal: Math.round(intake + (i % 5) * 40 - 80), raw: "seed" },
     });
-    await repos.logs.create({
+    pending.push({
       gymId, memberId: member.id, type: "WEIGHT", loggedFor: day,
       payload: { weightKg: Math.round(weight * 10) / 10, raw: "seed" },
     });
     // Fatigue Guardian inputs on training days.
     if (i % 2 === 0) {
-      await repos.logs.create({
+      pending.push({
         gymId, memberId: member.id, type: "WORKOUT", loggedFor: day,
         payload: {
           rpe: 7 + (i % 3),
@@ -275,13 +278,14 @@ async function seedActivity(
           raw: "seed",
         },
       });
-      await repos.logs.create({
+      pending.push({
         gymId, memberId: member.id, type: "SLEEP", loggedFor: day,
         payload: { hours: 6.5 + (i % 4) * 0.5, raw: "seed" },
       });
     }
     weight += kgPerDay;
   }
+  await repos.logs.createMany(pending);
 }
 
 async function main() {
@@ -292,6 +296,7 @@ async function main() {
     country: "IN",
     timezone: "Asia/Kolkata",
     city: "Pune",
+    joinCode: "DEMO",
     // Facts the concierge bot answers from.
     classSchedule: [
       { name: "Hyrox Prep", day: "Saturday", time: "07:00", coach: "Demo Coach" },
@@ -324,6 +329,7 @@ async function main() {
         status: "ACTIVE",
         coachId: coach.id,
         passwordHash: memberHash,
+        onboardedAt: new Date(),
         ...m,
       }),
     );

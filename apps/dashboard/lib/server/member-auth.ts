@@ -59,6 +59,59 @@ export function normalizePhone(raw: string): string | null {
   return null;
 }
 
+/**
+ * Self-service signup. The gym's join code decides which tenant they land in —
+ * without it we'd have no way to route a stranger to the right gym, and members
+ * are gym-scoped by design.
+ *
+ * New members start as PROSPECT and are NOT onboarded; the panel routes them
+ * into the onboarding conversation, and `finishOnboarding` promotes them to
+ * ACTIVE once the coach has something to work with.
+ */
+export async function memberRegister(input: {
+  name: string;
+  phone: string;
+  password: string;
+  joinCode: string;
+}) {
+  const name = input.name?.trim();
+  const phone = normalizePhone(input.phone);
+  const password = input.password ?? "";
+  const code = input.joinCode?.trim().toUpperCase();
+
+  if (!name || name.length < 2) throw new HttpError(400, "Please enter your name.");
+  if (!phone) throw new HttpError(400, "That doesn't look like a valid phone number.");
+  if (password.length < 6) throw new HttpError(400, "Password must be at least 6 characters.");
+  if (!code) throw new HttpError(400, "Please enter your gym's join code.");
+
+  const gyms = await repos.gyms.list();
+  const gym = gyms.find((g) => (g.joinCode ?? "").toUpperCase() === code);
+  if (!gym) throw new HttpError(404, "We don't recognise that join code — check with your gym.");
+
+  const existing = await repos.members.findByPhone(gym.id, phone);
+  if (existing?.passwordHash) {
+    throw new HttpError(409, "That number is already registered — sign in instead.");
+  }
+
+  // A member may already exist without a password (imported from the gym's
+  // roster, or auto-created from WhatsApp). Claiming the account is the right
+  // outcome — it keeps whatever history is already attached to them.
+  const member = await repos.members.upsert({
+    gymId: gym.id,
+    whatsappPhone: phone,
+    name,
+    status: existing?.status ?? "PROSPECT",
+    passwordHash: await bcrypt.hash(password, 10),
+    lastActiveAt: new Date(),
+  });
+
+  return {
+    token: signMemberToken({ sub: member.id, gymId: member.gymId, kind: "member" }),
+    member: { id: member.id, name: member.name, tier: member.tier, currentStreak: 0 },
+    claimedExisting: !!existing,
+  };
+}
+
 export async function memberLogin(phoneRaw: string, password: string) {
   const phone = normalizePhone(phoneRaw);
   if (!phone) throw new HttpError(400, "That doesn't look like a valid phone number.");
