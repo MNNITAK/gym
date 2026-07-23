@@ -13,16 +13,20 @@ import { HttpError } from "./auth";
 
 /** Drafts + plans awaiting a coach, scoped to tenant. */
 export async function pendingPlans(ctx: TenantContext) {
-  const plans = await repos.plans.listPending(ctx.gymId);
-  return Promise.all(
-    plans.map(async (p) => {
-      const member = await repos.members.get(p.memberId);
-      return {
-        ...p,
-        member: member ? { name: member.name, whatsappPhone: member.whatsappPhone } : null,
-      };
-    }),
-  );
+  // One roster fetch instead of a member lookup per pending plan.
+  const [plans, members] = await Promise.all([
+    repos.plans.listPending(ctx.gymId),
+    repos.members.listByGym(ctx.gymId),
+  ]);
+  const byId = new Map(members.map((m) => [m.id, m]));
+
+  return plans.map((p) => {
+    const member = byId.get(p.memberId);
+    return {
+      ...p,
+      member: member ? { name: member.name, whatsappPhone: member.whatsappPhone } : null,
+    };
+  });
 }
 
 /** Full plan detail (payload included) for coach review, tenant-scoped. */
@@ -98,16 +102,19 @@ export function renderPlan(
 
 // ── Messages (coach approval queue) ──────────────────────────────────────────
 export async function pendingMessages(ctx: TenantContext) {
-  const msgs = await repos.outboundMessages.listPending(ctx.gymId);
-  return Promise.all(
-    msgs.map(async (m) => {
-      const member = await repos.members.get(m.memberId);
-      return {
-        ...m,
-        member: member ? { name: member.name, whatsappPhone: member.whatsappPhone } : null,
-      };
-    }),
-  );
+  const [msgs, members] = await Promise.all([
+    repos.outboundMessages.listPending(ctx.gymId),
+    repos.members.listByGym(ctx.gymId),
+  ]);
+  const byId = new Map(members.map((m) => [m.id, m]));
+
+  return msgs.map((m) => {
+    const member = byId.get(m.memberId);
+    return {
+      ...m,
+      member: member ? { name: member.name, whatsappPhone: member.whatsappPhone } : null,
+    };
+  });
 }
 
 /** Coach approves a drafted message → queue → send. */

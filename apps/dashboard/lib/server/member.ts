@@ -155,6 +155,7 @@ export async function todayFor(member: Member) {
   const targets = plans.diet ? targetsForToday(plans.diet.payload, session?.day) : null;
   const today = new Date().toISOString().slice(0, 10);
 
+  // Promise.all so four ritual lookups cost one round trip, not four.
   const ritualState = await Promise.all(
     rituals.map(async (r) => ({
       id: r.id,
@@ -221,15 +222,13 @@ export async function progressFor(member: Member) {
   const latest = series.at(-1)?.weightKg ?? null;
 
   const tenureDays = (Date.now() - member.joinedAt.getTime()) / 864e5;
-  const activeDays = new Set(
-    (
-      await repos.logs.listByMemberTypesSince(
-        member.id,
-        ["INTAKE", "WEIGHT", "CHECKIN", "WORKOUT"],
-        new Date(Date.now() - 14 * 864e5),
-      )
-    ).map((l) => l.loggedFor.toISOString().slice(0, 10)),
-  ).size;
+  // Reuses the memoised log fetch above rather than querying again.
+  const recent = await repos.logs.listByMemberTypesSince(
+    member.id,
+    ["INTAKE", "WEIGHT", "CHECKIN", "WORKOUT"],
+    new Date(Date.now() - 14 * 864e5),
+  );
+  const activeDays = new Set(recent.map((l) => l.loggedFor.toISOString().slice(0, 10))).size;
   const adherence = Math.min(1, activeDays / 14);
 
   const nextTier = nextTierFrom(member.tier as MemberTierName);

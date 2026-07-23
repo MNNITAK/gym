@@ -29,7 +29,8 @@ export interface MetabolicEstimate {
 
 export const KCAL_PER_KG = 7700; // approx energy in 1kg body mass
 const MIN_DAYS_FOR_REGRESSION = 14;
-const MIN_R2_FOR_CONFIDENCE = 0.25;
+/** How tightly the slope must be pinned down before we trust the member's own number. */
+const MIN_PRECISION_FOR_CONFIDENCE = 0.25;
 
 /** Mifflin–St Jeor population baseline — used until regression is trustworthy. */
 export function mifflinStJeorTdee(input: {
@@ -46,10 +47,14 @@ export function mifflinStJeorTdee(input: {
 }
 
 /**
- * Estimate TDEE from rolling logs. Method: regress daily weight change on intake.
- * At energy balance (dWeight = 0), intake = TDEE, so TDEE = -intercept/slope … but
- * we solve directly: for each day, TDEE_i = intake_i - dWeight_i * KCAL_PER_KG,
- * then take a robust mean. Regression r² gates confidence.
+ * Estimate TDEE from a member's own rolling logs.
+ *
+ * Method: least-squares fit of body weight against time to get the underlying
+ * trend (kg/day), then TDEE = mean(intake) − trend × KCAL_PER_KG, since at energy
+ * balance intake equals TDEE and every kg of drift represents that much imbalance.
+ *
+ * Confidence comes from the standard error of the fitted slope, converted into
+ * kcal/day — so it reflects how precisely we actually know the number.
  */
 export function estimateMetabolicTwin(
   logs: DailyEnergyLog[],
@@ -68,47 +73,61 @@ export function estimateMetabolicTwin(
     };
   }
 
-  // Per-day implied TDEE from energy balance across consecutive days.
-  const perDayTdee: number[] = [];
-  const intakes: number[] = [];
-  for (let i = 1; i < n; i++) {
-    const prev = sorted[i - 1]!;
-    const cur = sorted[i]!;
-    const dtDays =
-      (cur.date.getTime() - prev.date.getTime()) / (1000 * 60 * 60 * 24);
-    if (dtDays <= 0) continue;
-    const dWeightPerDay = (cur.weightKg - prev.weightKg) / dtDays;
-    const impliedTdee = cur.intakeKcal - dWeightPerDay * KCAL_PER_KG;
-    // discard physiologically implausible days
-    if (impliedTdee > 800 && impliedTdee < 6000) {
-      perDayTdee.push(impliedTdee);
-      intakes.push(cur.intakeKcal);
-    }
+  // Fit the WEIGHT TREND by least squares, rather than differencing consecutive
+  // days. Bodyweight swings ~0.3kg overnight on water alone, and at 7700 kcal/kg
+  // that is 2300 kcal of phantom energy between two adjacent readings — noise
+  // that completely swamps a real 500 kcal deficit. Regressing the trend averages
+  // it out, which is also what the method actually claims to do.
+  const day0 = sorted[0]!.date.getTime();
+  const xs = sorted.map((l) => (l.date.getTime() - day0) / 86_400_000); // days
+  const ys = sorted.map((l) => l.weightKg);
+  const intakes = sorted.map((l) => l.intakeKcal);
+
+  const mean = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
+  const xBar = mean(xs);
+  const yBar = mean(ys);
+
+  let sxx = 0;
+  let sxy = 0;
+  for (let i = 0; i < n; i++) {
+    sxx += (xs[i]! - xBar) ** 2;
+    sxy += (xs[i]! - xBar) * (ys[i]! - yBar);
+  }
+  if (sxx === 0) {
+    return { computedTdee: formulaTdee, formulaTdee, usesRegression: false, confidence: 0.4, sampleDays: n };
   }
 
-  if (perDayTdee.length < MIN_DAYS_FOR_REGRESSION - 1) {
-    return {
-      computedTdee: formulaTdee,
-      formulaTdee,
-      usesRegression: false,
-      confidence: 0.4,
-      sampleDays: n,
-    };
-  }
-
-  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
-  const computedTdee = Math.round(mean(perDayTdee));
+  const slope = sxy / sxx; // kg per day
   const meanIntake = mean(intakes);
+  // At energy balance intake == TDEE; every kg of drift is KCAL_PER_KG of imbalance.
+  const computedTdee = Math.round(meanIntake - slope * KCAL_PER_KG);
 
-  // r² of implied-TDEE consistency (1 - normalized variance) as a confidence proxy
-  const mu = mean(perDayTdee);
-  const ssTot = perDayTdee.reduce((a, v) => a + (v - mu) ** 2, 0);
-  const variance = ssTot / perDayTdee.length;
-  const cv = Math.sqrt(variance) / mu; // coefficient of variation
-  const r2 = Math.max(0, 1 - cv); // lower spread ⇒ higher "fit"
+  // Residual scatter around the fitted trend → how precisely we know the slope,
+  // expressed in kcal. This is honest confidence: it stays high for a member
+  // holding steady, where a plain r² would collapse for lack of a trend to fit.
+  let sse = 0;
+  let sst = 0;
+  for (let i = 0; i < n; i++) {
+    const fitted = yBar + slope * (xs[i]! - xBar);
+    sse += (ys[i]! - fitted) ** 2;
+    sst += (ys[i]! - yBar) ** 2;
+  }
+  const slopeStdErr = n > 2 ? Math.sqrt(sse / (n - 2) / sxx) : Infinity;
+  const tdeeUncertainty = slopeStdErr * KCAL_PER_KG; // kcal/day
+  const r2 = sst > 0 ? Math.max(0, 1 - sse / sst) : 0;
 
-  const usesRegression = r2 >= MIN_R2_FOR_CONFIDENCE;
-  const confidence = Math.min(1, Math.max(0.4, r2));
+  // ±150 kcal or better is a trustworthy estimate; ±500 is not worth showing.
+  const precision = Math.max(0, Math.min(1, 1 - (tdeeUncertainty - 150) / 350));
+
+  if (!Number.isFinite(computedTdee) || computedTdee < 800 || computedTdee > 6000) {
+    return { computedTdee: formulaTdee, formulaTdee, usesRegression: false, confidence: 0.4, sampleDays: n };
+  }
+
+  // Trust the member's own number once the slope is pinned down well enough.
+  // Gating on r² was wrong: a member holding steady has no trend to fit, so r²
+  // collapses toward zero even when the estimate is excellent.
+  const usesRegression = precision >= MIN_PRECISION_FOR_CONFIDENCE;
+  const confidence = Math.min(0.98, Math.max(0.4, precision));
 
   return {
     computedTdee: usesRegression ? computedTdee : formulaTdee,
@@ -117,7 +136,7 @@ export function estimateMetabolicTwin(
     confidence,
     sampleDays: n,
     regression: {
-      slope: -1 / KCAL_PER_KG,
+      slope, // kg per day, from the fitted weight trend
       intercept: computedTdee,
       meanIntake,
       r2,

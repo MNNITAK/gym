@@ -5,6 +5,7 @@ import {
   stripUndefined,
   docId,
 } from "./firestore.js";
+import { requestCache } from "./cache.js";
 import type {
   AnonymizedPattern,
   ChurnScore,
@@ -61,8 +62,13 @@ export const gyms = {
   async upsertBySlug(data: Partial<Gym> & { slug: string; name: string }): Promise<Gym> {
     return createDoc<Gym>(COLLECTIONS.gyms, data, data.slug);
   },
-  getBySlug(slug: string): Promise<Gym | null> {
-    return getById<Gym>(COLLECTIONS.gyms, slug);
+  async getBySlug(slug: string): Promise<Gym | null> {
+    const key = `gym:${slug}`;
+    const cached = requestCache.get<Gym | null>(key);
+    if (cached !== undefined) return cached;
+    const gym = await getById<Gym>(COLLECTIONS.gyms, slug);
+    requestCache.set(key, gym, 15_000);
+    return gym;
   },
   async findByPhoneNumberId(phoneNumberId: string): Promise<Gym | null> {
     const snap = await getDb()
@@ -272,45 +278,47 @@ export const plans = {
 
 // ── Logs ─────────────────────────────────────────────────────────────────────
 export const logs = {
-  create(data: Omit<Log, "id" | "createdAt">): Promise<Log> {
-    return createDoc<Log>(COLLECTIONS.logs, data);
+  async create(data: Omit<Log, "id" | "createdAt">): Promise<Log> {
+    const created = await createDoc<Log>(COLLECTIONS.logs, data);
+    requestCache.invalidate(`logs:${data.memberId}`);
+    return created;
   },
   async listByMemberTypesSince(memberId: string, types: LogType[], since: Date): Promise<Log[]> {
-    // Equality-only fetch by member; filter type/date + order in memory.
+    const all = await logs.allByMember(memberId);
+    const typeSet = new Set(types);
+    return all.filter((l) => typeSet.has(l.type) && l.loggedFor.getTime() >= since.getTime());
+  },
+  /**
+   * Every log for a member, oldest first, memoised for the life of one request.
+   *
+   * The query is equality-only (no composite index needed), so each caller was
+   * re-fetching the member's whole log history just to filter it differently —
+   * three or four identical round trips to build a single screen.
+   */
+  async allByMember(memberId: string): Promise<Log[]> {
+    const cached = requestCache.get<Log[]>(`logs:${memberId}`);
+    if (cached) return cached;
     const snap = await getDb()
       .collection(COLLECTIONS.logs)
       .where("memberId", "==", memberId)
       .get();
-    const typeSet = new Set(types);
-    return snap.docs
+    const list = snap.docs
       .map((d) => toModel<Log>(d))
-      .filter((l) => typeSet.has(l.type) && l.loggedFor.getTime() >= since.getTime())
       .sort((a, b) => a.loggedFor.getTime() - b.loggedFor.getTime());
+    requestCache.set(`logs:${memberId}`, list);
+    return list;
   },
   async countByMemberBetween(memberId: string, from: Date, to?: Date): Promise<number> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.logs)
-      .where("memberId", "==", memberId)
-      .get();
+    const all = await logs.allByMember(memberId);
     const fromMs = from.getTime();
     const toMs = to?.getTime() ?? Infinity;
-    return snap.docs
-      .map((d) => toModel<Log>(d))
-      .filter((l) => l.loggedFor.getTime() >= fromMs && l.loggedFor.getTime() < toMs)
-      .length;
+    return all.filter((l) => l.loggedFor.getTime() >= fromMs && l.loggedFor.getTime() < toMs).length;
   },
   /** Most-recent WEIGHT log value for a member (milestone detection). */
   async latestWeightKg(memberId: string): Promise<number | null> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.logs)
-      .where("memberId", "==", memberId)
-      .where("type", "==", "WEIGHT")
-      .get();
-    if (snap.empty) return null;
-    const latest = snap.docs
-      .map((d) => toModel<Log>(d))
-      .sort((a, b) => b.loggedFor.getTime() - a.loggedFor.getTime())[0]!;
-    const w = (latest.payload as { weightKg?: number }).weightKg;
+    const all = await logs.allByMember(memberId);
+    const latest = all.filter((l) => l.type === "WEIGHT").at(-1);
+    const w = (latest?.payload as { weightKg?: number } | undefined)?.weightKg;
     return typeof w === "number" ? w : null;
   },
 };
@@ -367,12 +375,17 @@ export const protocols = {
     );
   },
   async listByKind(kind: Protocol["kind"]): Promise<Protocol[]> {
+    const key = `protocols:${kind}`;
+    const cached = requestCache.get<Protocol[]>(key);
+    if (cached) return cached;
     const snap = await getDb()
       .collection(COLLECTIONS.protocols)
       .where("kind", "==", kind)
       .where("active", "==", true)
       .get();
-    return snap.docs.map((d) => toModel<Protocol>(d));
+    const list = snap.docs.map((d) => toModel<Protocol>(d));
+    requestCache.set(key, list, 60_000);
+    return list;
   },
   get(id: string): Promise<Protocol | null> {
     return getById<Protocol>(COLLECTIONS.protocols, id);
@@ -393,6 +406,24 @@ export const churnScores = {
     return snap.docs
       .map((d) => toModel<ChurnScore>(d))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]!;
+  },
+  /**
+   * Latest score for EVERY member in a gym, in one round trip.
+   * Calling latestByMember in a loop was an N+1: the gym overview fired one
+   * query per member and spent over a second doing it.
+   */
+  async latestByGym(gymId: string): Promise<Map<string, ChurnScore>> {
+    const snap = await getDb()
+      .collection(COLLECTIONS.churnScores)
+      .where("gymId", "==", gymId)
+      .get();
+    const latest = new Map<string, ChurnScore>();
+    for (const doc of snap.docs) {
+      const s = toModel<ChurnScore>(doc);
+      const prev = latest.get(s.memberId);
+      if (!prev || s.createdAt.getTime() > prev.createdAt.getTime()) latest.set(s.memberId, s);
+    }
+    return latest;
   },
 };
 
@@ -569,6 +600,55 @@ export const ritualCompletions = {
     return snap.exists;
   },
 };
+
+// ── Maintenance (demo reset only) ────────────────────────────────────────────
+/**
+ * Delete every document in a collection matching one equality filter.
+ *
+ * Used solely by the demo seed: re-seeding onto an existing member left the old
+ * logs in place, so a member scripted to have gone quiet still looked active and
+ * their churn score was wrong. Not used by the app.
+ */
+export async function deleteWhere(
+  collection: string,
+  field: string,
+  value: string,
+): Promise<number> {
+  const db = getDb();
+  const snap = await db.collection(collection).where(field, "==", value).get();
+  if (snap.empty) return 0;
+
+  // Firestore caps a batch at 500 writes.
+  let deleted = 0;
+  for (let i = 0; i < snap.docs.length; i += 450) {
+    const batch = db.batch();
+    for (const doc of snap.docs.slice(i, i + 450)) batch.delete(doc.ref);
+    await batch.commit();
+    deleted += Math.min(450, snap.docs.length - i);
+  }
+  requestCache.clear();
+  return deleted;
+}
+
+/** Wipe everything hanging off a member, leaving the member record itself. */
+export async function purgeMemberData(memberId: string): Promise<number> {
+  const collections = [
+    COLLECTIONS.logs,
+    COLLECTIONS.notes,
+    COLLECTIONS.events,
+    COLLECTIONS.memberMemories,
+    COLLECTIONS.metabolicTwins,
+    COLLECTIONS.churnScores,
+    COLLECTIONS.milestones,
+    COLLECTIONS.plans,
+    COLLECTIONS.conversationTurns,
+    COLLECTIONS.outboundMessages,
+    COLLECTIONS.ritualCompletions,
+  ];
+  let total = 0;
+  for (const c of collections) total += await deleteWhere(c, "memberId", memberId);
+  return total;
+}
 
 // ── Anonymized cross-gym patterns (Phase 4 flywheel) ─────────────────────────
 export const anonymizedPatterns = {

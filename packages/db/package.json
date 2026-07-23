@@ -13,7 +13,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "seed": "dotenv -e ../../.env -- tsx src/seed.ts"
+    "seed": "dotenv -e ../../.env -- tsx src/seed.ts",
+    "seed:demo": "dotenv -e ../../.env -- tsx src/seed-demo.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

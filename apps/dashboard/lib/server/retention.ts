@@ -10,24 +10,26 @@ import { HttpError } from "./auth";
  * specific suggested intervention (~day 20, not day 90).
  */
 export async function atRisk(ctx: TenantContext) {
-  const members = await repos.members.listByGym(ctx.gymId);
-  const scored = await Promise.all(
-    members.map(async (m) => {
-      const churn = await repos.churnScores.latestByMember(m.id);
-      return churn
-        ? {
-            memberId: m.id,
-            name: m.name,
-            whatsappPhone: m.whatsappPhone,
-            tier: m.tier,
-            score: churn.score,
-            risk: churn.risk,
-            suggestion: churn.suggestion,
-          }
-        : null;
-    }),
-  );
-  return scored
+  // Two queries total, regardless of roster size.
+  const [members, churnByMember] = await Promise.all([
+    repos.members.listByGym(ctx.gymId),
+    repos.churnScores.latestByGym(ctx.gymId),
+  ]);
+
+  return members
+    .map((m) => {
+      const churn = churnByMember.get(m.id);
+      if (!churn) return null;
+      return {
+        memberId: m.id,
+        name: m.name,
+        whatsappPhone: m.whatsappPhone,
+        tier: m.tier,
+        score: churn.score,
+        risk: churn.risk,
+        suggestion: churn.suggestion,
+      };
+    })
     .filter((x): x is NonNullable<typeof x> => x != null && (x.risk === "HIGH" || x.risk === "CRITICAL"))
     .sort((a, b) => b.score - a.score);
 }
@@ -81,14 +83,16 @@ export async function scanWins(ctx: TenantContext, memberId: string) {
 
 // ── Owner analytics ──────────────────────────────────────────────────────────
 export async function analyticsOverview(ctx: TenantContext) {
-  const members = await repos.members.listByGym(ctx.gymId);
+  const [members, churnByMember] = await Promise.all([
+    repos.members.listByGym(ctx.gymId),
+    repos.churnScores.latestByGym(ctx.gymId),
+  ]);
   const active = members.filter((m) => m.status === "ACTIVE");
 
-  let atRiskMembers = 0;
-  for (const m of active) {
-    const churn = await repos.churnScores.latestByMember(m.id);
-    if (churn && (churn.risk === "HIGH" || churn.risk === "CRITICAL")) atRiskMembers += 1;
-  }
+  const atRiskMembers = active.filter((m) => {
+    const risk = churnByMember.get(m.id)?.risk;
+    return risk === "HIGH" || risk === "CRITICAL";
+  }).length;
 
   const tiers: Record<string, number> = {};
   for (const m of active) tiers[m.tier] = (tiers[m.tier] ?? 0) + 1;

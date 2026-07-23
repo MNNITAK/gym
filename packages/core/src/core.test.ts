@@ -69,6 +69,49 @@ describe("metabolic twin (IP #3)", () => {
     expect(est.computedTdee).toBeLessThan(2600);
   });
 
+  it("survives realistic day-to-day weight noise", () => {
+    // ±0.3kg of overnight water swing is ~2300 kcal of phantom energy between two
+    // adjacent readings. Differencing consecutive days drowned in it (7-27% error);
+    // fitting the trend must not.
+    const trueTdee = 2620;
+    const intake = 2140;
+    const dPerDay = (intake - trueTdee) / 7700;
+    let w = 85;
+    let seed = 7;
+    const rnd = () => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return seed / 2147483648 - 0.5;
+    };
+    const logs = Array.from({ length: 30 }, (_, i) => {
+      const entry = {
+        date: new Date(2026, 0, i + 1),
+        intakeKcal: Math.round(intake + rnd() * 260),
+        weightKg: Number((w + rnd() * 0.6).toFixed(1)),
+      };
+      w += dPerDay;
+      return entry;
+    });
+
+    const est = estimateMetabolicTwin(logs, 2400);
+    expect(est.usesRegression).toBe(true);
+    const errorPct = (Math.abs(est.computedTdee - trueTdee) / trueTdee) * 100;
+    expect(errorPct).toBeLessThan(3);
+  });
+
+  it("stays confident for a member holding steady", () => {
+    // No weight trend to fit, so r² is ~0 — but the estimate is excellent and the
+    // old r²-based gate wrongly discarded it.
+    const logs = Array.from({ length: 30 }, (_, i) => ({
+      date: new Date(2026, 0, i + 1),
+      intakeKcal: 2400,
+      weightKg: 80 + (i % 2 === 0 ? 0.1 : -0.1),
+    }));
+    const est = estimateMetabolicTwin(logs, 2100);
+    expect(est.usesRegression).toBe(true);
+    expect(est.computedTdee).toBeGreaterThan(2300);
+    expect(est.computedTdee).toBeLessThan(2500);
+  });
+
   it("mifflin-st jeor is in a sane range", () => {
     const tdee = mifflinStJeorTdee({
       sex: "M",
