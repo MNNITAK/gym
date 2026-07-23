@@ -55,7 +55,7 @@ WhatsApp is an optional mirror that only fires if it's configured.
 | `packages/db` | Firestore (Admin SDK) data layer — typed repositories + seed |
 | `packages/whatsapp` | Cloud API client (optional mirror channel) |
 | `apps/dashboard` | **The app** — member panel, coach console, all API routes, engine orchestration in `lib/server/` |
-| `apps/api`, `apps/worker` | Legacy standalone NestJS API + BullMQ worker. Kept for reference, **not** built or deployed. |
+| `apps/worker` | Legacy BullMQ/Redis job runner. Superseded by `/api/jobs/run`; **not** built or deployed. |
 
 ## Quickstart
 
@@ -109,7 +109,13 @@ pnpm test                     # 93 unit tests on the deterministic rules
 
 ## Deploy to Vercel
 
-1. Push and import the repo. `vercel.json` sets the monorepo build and the daily cron.
+1. Import the repo, then **set Root Directory to `apps/dashboard`** in
+   Settings → General. This is the one setting that matters: Vercel looks for
+   `next` in the package.json at the Root Directory, so pointing it anywhere else
+   fails with *"No Next.js version detected"*.
+   `apps/dashboard/vercel.json` handles the rest — it installs and builds from the
+   workspace root so the `@keystone/*` packages compile first, and registers the
+   daily cron.
 2. `node scripts/print-service-account-env.mjs` → paste as `FIREBASE_SERVICE_ACCOUNT`
    (serverless has no filesystem for a key file).
 3. Env vars: `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT`, `AUTH_SECRET`,

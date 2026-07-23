@@ -1,9 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm turbo run build --filter=@keystone/dashboard...",
-  "outputDirectory": "apps/dashboard/.next",
+  "installCommand": "cd ../.. && pnpm install",
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=@keystone/dashboard...",
   "crons": [
     {
       "path": "/api/jobs/run",
