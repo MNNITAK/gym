@@ -110,7 +110,7 @@ Return ONLY a JSON object with EXACTLY this shape (keys and types):
   "protocolSlug": string,
   "daysPerWeek": number,
   "week": [
-    { "day": string, "focus": string, "intensity": "low"|"moderate"|"high",
+    { "day": string, "focus": string, "intensity": "low"|"moderate"|"high", "time": "HH:MM (24h clock START time, e.g. 18:00 — NOT the duration)",
       "exercises": [
         { "name": string, "sets": number, "reps": string,
           "targetRpe": number, "regression": string, "progression": string }
@@ -191,7 +191,7 @@ Return ONLY a JSON object with EXACTLY this shape:
   "plan": {
     "protocolSlug": string,
     "daysPerWeek": number,
-    "week": [ { "day": string, "focus": string, "intensity": "low"|"moderate"|"high",
+    "week": [ { "day": string, "focus": string, "intensity": "low"|"moderate"|"high", "time": "HH:MM (24h clock START time, e.g. 18:00 — NOT the duration)",
                 "exercises": [ { "name": string, "sets": number, "reps": string,
                                  "targetRpe": number, "regression": string, "progression": string } ] } ],
     "deload": boolean

@@ -17,6 +17,22 @@ import { usePlanRequestLive } from "../../lib/realtime";
 
 type Stage = "CHECKIN" | "REQUEST" | "WAITING" | "READY" | "RESTDAY";
 
+interface DayTask {
+  id: string;
+  kind: "MEAL" | "SESSION" | "WEIGH_IN";
+  time: string;
+  title: string;
+  detail: string;
+  logType: "INTAKE" | "WORKOUT" | "WEIGHT";
+  done: boolean;
+}
+
+const TASK_ICON: Record<DayTask["kind"], string> = {
+  WEIGH_IN: "⚖️",
+  MEAL: "🍽️",
+  SESSION: "🏋️",
+};
+
 interface Today {
   needsOnboarding?: boolean;
   stage: Stage;
@@ -35,6 +51,8 @@ interface Today {
   session: { day: string; focus: string; intensity: string; deload: boolean; exercises: unknown[] } | null;
   twin: { tdee: number; usesRegression: boolean } | null;
   rituals: Array<{ id: string; kind: string; prompt: string; done: boolean }>;
+  schedule: DayTask[];
+  nextTask: DayTask | null;
   loggedToday: { weight: boolean; food: number; workout: boolean; sleep: boolean };
   unreadMessages: number;
   hasPlans: { diet: boolean; training: boolean };
@@ -99,6 +117,38 @@ export default function TodayPage() {
     setBusy("request");
     try {
       await meApi("/plan-request", { method: "POST", body: JSON.stringify({}) });
+      await load();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /**
+   * Ticking a task writes the real log — an eaten meal is an INTAKE log, a
+   * finished session is a WORKOUT log — so adherence, the twin and churn all
+   * see it without a parallel completion store.
+   */
+  async function completeTask(task: DayTask) {
+    if (task.done) return;
+    if (task.kind === "WEIGH_IN") {
+      document.getElementById("quick-weight")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      (document.getElementById("quick-weight") as HTMLInputElement | null)?.focus();
+      return;
+    }
+    setBusy(task.id);
+    try {
+      await meApi("/log", {
+        method: "POST",
+        body: JSON.stringify({
+          type: task.logType,
+          payload:
+            task.kind === "MEAL"
+              ? { taskId: task.id, mealName: task.title, raw: task.detail }
+              : { taskId: task.id, focus: task.title, completed: true },
+        }),
+      });
       await load();
     } catch (e) {
       setError((e as Error).message);
@@ -253,6 +303,62 @@ export default function TodayPage() {
         </MCard>
       </div>
 
+      {/* The day, in order. The plan screens say what the week looks like; this
+          says what to do next. */}
+      {(data?.schedule.length ?? 0) > 1 && (
+        <section className="mt-5">
+          <div className="flex items-baseline justify-between">
+            <MLabel>Your day</MLabel>
+            <span className="font-mono text-[10px] text-neutral-400">
+              {data!.schedule.filter((t) => t.done).length}/{data!.schedule.length} done
+            </span>
+          </div>
+          <div className="mt-2 space-y-2">
+            {data!.schedule.map((t) => {
+              const isNext = data!.nextTask?.id === t.id && !t.done;
+              return (
+                <MCard
+                  key={t.id}
+                  className={`${t.done ? "opacity-50" : ""} ${isNext ? "border-ink" : ""}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-11 shrink-0 font-mono text-[11px] font-bold text-neutral-500">
+                      {t.time}
+                    </span>
+                    <span className="text-lg">{TASK_ICON[t.kind]}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-sm font-bold ${t.done ? "line-through" : ""}`}>
+                        {t.title}
+                        {isNext && (
+                          <span className="ml-2 rounded-full bg-ink px-1.5 py-0.5 font-mono text-[9px] font-bold text-white">
+                            NEXT
+                          </span>
+                        )}
+                      </p>
+                      {t.detail && (
+                        <p className="truncate text-[11px] text-neutral-500">{t.detail}</p>
+                      )}
+                    </div>
+                    {t.done ? (
+                      <span className="shrink-0 text-diet">✓</span>
+                    ) : (
+                      <MButton
+                        size="sm"
+                        tone="ghost"
+                        busy={busy === t.id}
+                        onClick={() => completeTask(t)}
+                      >
+                        {t.kind === "WEIGH_IN" ? "Log" : "Done"}
+                      </MButton>
+                    )}
+                  </div>
+                </MCard>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Daily rituals — two minutes, five taps */}
       {(data?.rituals.length ?? 0) > 0 && (
         <section className="mt-5">
@@ -282,6 +388,7 @@ export default function TodayPage() {
         <MCard className="mt-2">
           <div className="flex gap-2">
             <input
+              id="quick-weight"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               inputMode="decimal"

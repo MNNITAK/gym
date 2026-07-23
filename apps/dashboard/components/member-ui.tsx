@@ -14,7 +14,9 @@ const TABS = [
   { href: "/app/diet", label: "Diet", icon: "🥗" },
   { href: "/app/training", label: "Train", icon: "🏋️" },
   { href: "/app/coach", label: "Coach", icon: "💬" },
-  { href: "/app/progress", label: "Progress", icon: "📈" },
+  // Progress, Calendar, History, Measurements, Settings, Gym and Messages all
+  // live behind More — five thumb-sized targets is the practical limit.
+  { href: "/app/more", label: "More", icon: "⋯" },
 ];
 
 export function useMemberAuth(): boolean {
@@ -53,8 +55,8 @@ export function MemberShell({
             KEYSTONE
           </Link>
           <div className="flex-1" />
-          <Link href="/app/me" className="text-sm text-neutral-500 hover:text-ink">
-            Me
+          <Link href="/app/more" className="text-sm text-neutral-500 hover:text-ink">
+            More
           </Link>
           <button
             onClick={() => {

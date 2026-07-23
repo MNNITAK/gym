@@ -9,6 +9,8 @@ import {
   matchMovement,
   rehabProtocolsFor,
   computeTier,
+  buildDayPlan,
+  nextTask,
   TIER_PERKS,
   type MemberTierName,
 } from "@keystone/core";
@@ -172,6 +174,21 @@ export async function todayFor(member: Member) {
     new Date(new Date().setHours(0, 0, 0, 0)),
   );
 
+  // The same plan, ordered as a day. Completion comes from the real logs, so a
+  // meal logged by talking to Hearth ticks the task off too.
+  const completedIds = todaysLogs
+    .map((l) => (l.payload as { taskId?: string }).taskId)
+    .filter((id): id is string => !!id);
+  if (todaysLogs.some((l) => l.type === "WORKOUT")) completedIds.push("session");
+
+  const schedule = buildDayPlan({
+    meals: targets?.meals ?? null,
+    session,
+    preferredTrainingTime: member.preferredTrainingTime,
+    weighedToday: todaysLogs.some((l) => l.type === "WEIGHT"),
+    completedIds,
+  });
+
   return {
     member: {
       id: member.id,
@@ -191,6 +208,8 @@ export async function todayFor(member: Member) {
       ? { tdee: twin.computedTdee, usesRegression: twin.usesRegression, confidence: twin.confidence }
       : null,
     rituals: ritualState,
+    schedule,
+    nextTask: nextTask(schedule),
     loggedToday: {
       weight: todaysLogs.some((l) => l.type === "WEIGHT"),
       food: todaysLogs.filter((l) => l.type === "INTAKE").length,

@@ -52,14 +52,7 @@ async function main() {
     if (active.status !== "ACTIVE") throw new Error(`${label} plan not ACTIVE`);
     console.log(`✓ ${label} plan approved + activated → delivered to member`);
 
-    const pdf = await fetch(`${APP}/api/plans/${plan.id}/pdf`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const bytes = Buffer.from(await pdf.arrayBuffer());
-    if (!(pdf.headers.get("content-type") ?? "").includes("pdf") || bytes.length < 500) {
-      throw new Error(`${label} PDF failed`);
-    }
-    console.log(`✓ ${label} PDF rendered (${bytes.length} bytes)`);
+    // Plans are delivered digitally in the member panel — there is no PDF path.
   }
 
   // Retention: inbound concierge + a weigh-in

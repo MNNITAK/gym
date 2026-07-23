@@ -39,11 +39,12 @@ Return ONLY a JSON object with EXACTLY this shape (keys and types):
 {
   "protocolSlug": string,                     // the given protocol slug
   "dailyTargets": { "kcal": number, "proteinG": number, "carbsG": number, "fatG": number },
-  "meals": [ { "name": string, "items": [string, ...] } ],   // items are plain strings
+  "meals": [ { "name": string, "items": [string, ...], "time": "HH:MM" } ],  // items are plain strings; "time" is when to eat it
   "groceryList": [string, ...],
   "adjustment": "increase" | "decrease" | "hold" | "behavior_intervention"
 }
-Do not add other top-level keys. Meal items MUST be strings like "2 rotis" or "150g paneer".`;
+Do not add other top-level keys. Meal items MUST be strings like "2 rotis" or "150g paneer".
+Give every meal a 24-hour "time" so the member's day can be laid out in order.`;
 
 /**
  * Draft a diet plan. The adherence gate (IP #1) decides the adjustment direction
@@ -117,7 +118,7 @@ Return ONLY a JSON object with EXACTLY this shape:
   "plan": {
     "protocolSlug": string,
     "dailyTargets": { "kcal": number, "proteinG": number, "carbsG": number, "fatG": number },
-    "meals": [ { "name": string, "items": [string, ...] } ],
+    "meals": [ { "name": string, "items": [string, ...], "time": "HH:MM" } ],
     "groceryList": [string, ...],
     "adjustment": "increase" | "decrease" | "hold" | "behavior_intervention"
   }

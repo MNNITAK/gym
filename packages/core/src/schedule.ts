@@ -30,13 +30,30 @@ function fallbackSlot(index: number, total: number): string {
   return minutesToHhmm(Math.round(startMin + step * index));
 }
 
+/**
+ * A generated "time" is only usable if it's a well-formed clock time inside the
+ * waking day. Models asked for a session time will sometimes answer with the
+ * session *duration* ("00:45"), which parses fine and then sorts the workout
+ * before breakfast — so anything before 04:00 is treated as not-a-time.
+ */
+const EARLIEST_PLAUSIBLE_MIN = 4 * 60;
+
+function usableTime(value?: string | null): string | null {
+  if (!value || !/^\d{1,2}:\d{2}$/.test(value)) return null;
+  const padded = pad(value);
+  const mins = minutesOfDay(padded);
+  if (mins < EARLIEST_PLAUSIBLE_MIN || mins > 23 * 60 + 59) return null;
+  return padded;
+}
+
 /** The time a meal belongs at: its own, else its name, else an even spread. */
 export function mealTime(
   meal: { name: string; time?: string | null },
   index: number,
   total: number,
 ): string {
-  if (meal.time && /^\d{1,2}:\d{2}$/.test(meal.time)) return pad(meal.time);
+  const own = usableTime(meal.time);
+  if (own) return own;
   const named = MEAL_SLOTS.find((s) => s.re.test(meal.name));
   return named ? named.time : fallbackSlot(index, total);
 }
@@ -45,9 +62,7 @@ export function sessionTime(
   day: { time?: string | null },
   preferred?: string | null,
 ): string {
-  if (day.time && /^\d{1,2}:\d{2}$/.test(day.time)) return pad(day.time);
-  if (preferred && /^\d{1,2}:\d{2}$/.test(preferred)) return pad(preferred);
-  return DEFAULT_TRAINING_TIME;
+  return usableTime(day.time) ?? usableTime(preferred) ?? DEFAULT_TRAINING_TIME;
 }
 
 export const minutesOfDay = (hhmm: string): number => {
@@ -69,4 +84,102 @@ function pad(hhmm: string): string {
 /** Sort anything carrying a "HH:MM" into chronological order. */
 export function byTime<T extends { time: string }>(items: T[]): T[] {
   return [...items].sort((a, b) => minutesOfDay(a.time) - minutesOfDay(b.time));
+}
+
+// ── The day as an ordered list of tasks ──────────────────────────────────────
+// The plan screens answer "what am I eating this week"; the Today screen has to
+// answer "what do I do next". Same plan, different question — so this derives a
+// single ordered task list, and completing a task writes the *real* log rather
+// than a parallel completion record.
+
+export type DayTaskKind = "MEAL" | "SESSION" | "WEIGH_IN";
+
+export interface DayTask {
+  /** Stable within a day, so a completion can be matched back to the task. */
+  id: string;
+  kind: DayTaskKind;
+  time: string;
+  title: string;
+  detail: string;
+  /** The log this task writes when the member ticks it off. */
+  logType: "INTAKE" | "WORKOUT" | "WEIGHT";
+  done: boolean;
+}
+
+export interface DayPlanInput {
+  meals?: Array<{ name: string; items: unknown[]; time?: string | null }> | null;
+  session?: {
+    day: string;
+    focus: string;
+    intensity?: string;
+    exercises?: unknown[];
+    time?: string | null;
+  } | null;
+  preferredTrainingTime?: string | null;
+  /** Whether the member has already weighed in today. */
+  weighedToday?: boolean;
+  /** Task ids already completed today, derived from today's logs. */
+  completedIds?: string[];
+}
+
+/** A meal's task id — deterministic from its position and name. */
+export function mealTaskId(index: number, name: string): string {
+  return `meal:${index}:${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+}
+
+/**
+ * Build the ordered day: weigh-in first thing, then meals and the session
+ * interleaved by time. Tasks with no explicit time fall back to `mealTime` /
+ * `sessionTime`, so plans generated before times existed still lay out sensibly.
+ */
+export function buildDayPlan(input: DayPlanInput): DayTask[] {
+  const done = new Set(input.completedIds ?? []);
+  const tasks: DayTask[] = [];
+
+  tasks.push({
+    id: "weigh-in",
+    kind: "WEIGH_IN",
+    time: "07:00",
+    title: "Morning weigh-in",
+    detail: "Same time, same conditions — it's the trend that matters.",
+    logType: "WEIGHT",
+    done: !!input.weighedToday,
+  });
+
+  const meals = input.meals ?? [];
+  meals.forEach((m, i) => {
+    const id = mealTaskId(i, m.name);
+    tasks.push({
+      id,
+      kind: "MEAL",
+      time: mealTime(m, i, meals.length),
+      title: m.name,
+      detail: m.items.map(String).join(" · "),
+      logType: "INTAKE",
+      done: done.has(id),
+    });
+  });
+
+  if (input.session && (input.session.exercises?.length ?? 0) > 0) {
+    tasks.push({
+      id: "session",
+      kind: "SESSION",
+      time: sessionTime(input.session, input.preferredTrainingTime),
+      title: input.session.focus,
+      detail: `${input.session.exercises!.length} exercises${
+        input.session.intensity ? ` · ${input.session.intensity}` : ""
+      }`,
+      logType: "WORKOUT",
+      done: done.has("session"),
+    });
+  }
+
+  return byTime(tasks);
+}
+
+/** The task the member should be looking at right now: next undone by time. */
+export function nextTask(tasks: DayTask[], now = new Date()): DayTask | null {
+  const mins = now.getHours() * 60 + now.getMinutes();
+  const pending = tasks.filter((t) => !t.done);
+  return pending.find((t) => minutesOfDay(t.time) >= mins) ?? pending[0] ?? null;
 }

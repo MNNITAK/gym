@@ -3,6 +3,9 @@
 //   member's screen flips to READY.
 // Requires the app running + seeded DB.
 const APP = process.env.APP_URL ?? "http://localhost:3000";
+// A member can only have one request per day, so re-running the full coach leg
+// needs a member who hasn't asked yet today. PHONE picks one.
+const PHONE = process.env.PHONE ?? "9000000003";
 
 async function j(path, opts = {}, token) {
   const res = await fetch(`${APP}/api${path}`, {
@@ -22,7 +25,7 @@ async function main() {
   // ── Member ──
   const { token: MT } = await j("/me/login", {
     method: "POST",
-    body: JSON.stringify({ phone: "9000000003", password: "member-demo" }),
+    body: JSON.stringify({ phone: PHONE, password: "member-demo" }),
   });
   const me = await j("/me/today", {}, MT);
   console.log(`✓ member signed in — stage: ${me.stage}`);
@@ -56,13 +59,24 @@ async function main() {
     console.log(`  warm-up offered: ${waiting.warmup.name} (${waiting.warmup.steps.length} steps, ${waiting.warmup.totalMinutes} min)`);
   }
 
+  // Requests are one-per-member-per-day, so a second run on the same day gets
+  // back the request the coach already closed rather than opening a new one.
+  if (req.request.status === "APPROVED") {
+    if (waiting.stage !== "READY") throw new Error(`approved but stage is ${waiting.stage}`);
+    console.log("✓ today's request was already approved — member is READY (re-run on the same day)");
+    console.log(`  today: ${waiting.targets ? `${waiting.targets.kcal} kcal` : "no targets"} · ${waiting.session ? waiting.session.focus : "rest"}`);
+    console.log("\n✅ Loop verified up to the point today's run had already reached.");
+    return;
+  }
+
   // ── Coach ──
   const { token: CT } = await j("/auth/login", {
     method: "POST",
     body: JSON.stringify({ email: "coach@demo.gym", password: "keystone-demo" }),
   });
   const queue = await j("/requests", {}, CT);
-  const mine = queue.find((q) => q.id === req.request.id) ?? queue[0];
+  const mine = queue.find((q) => q.id === req.request.id);
+  if (!mine) throw new Error(`request ${req.request.id} is open but missing from the coach queue`);
   console.log(`✓ coach queue has ${queue.length} request(s) — reviewing ${mine.memberName}`);
 
   const detail = await j(`/requests/${mine.id}`, {}, CT);
