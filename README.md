@@ -1,177 +1,156 @@
 # KEYSTONE
 
-The operating system for gyms that keep members for life. Three AI engines —
-**Diet**, **Training**, **Retention** — on one shared **member brain**, delivered
-over **WhatsApp**, with a **coach in the loop** (AI drafts, a human approves).
+The operating system for gyms that keep members for life. Three named AI engines —
+**Hearth**, **Forge**, **Anchor** — on one shared **member brain**, with a **coach in
+the loop** (AI drafts, a human approves).
 
-Sold to gyms as a per-active-member subscription. The moat is the compounding
-data: per-member memory (switching cost) + cross-gym learning (network effect).
+Sold to gyms as a per-active-member subscription. The moat is the compounding data:
+per-member memory (switching cost) + cross-gym learning (network effect).
 
-> **All five phases are built** (see the [build plan](./docs/PLAN.md)): the shared
-> member brain, multi-tenant auth, WhatsApp gateway, LLM abstraction (Groq, swappable),
-> the recurring-jobs worker, the coach console, and all three AI engines —
-> **Diet**, **Training**, and **Retention** — plus the cross-gym learning flywheel.
-> Every engine is validated end-to-end against real Firestore + Groq.
+> **All five phases of the [build plan](./docs/PLAN.md) are built**, plus a full
+> member-facing panel. Everything runs as **one Next.js app** that deploys to
+> Vercel as a single project — no separate API server, no Redis.
 
-## Architecture
+## The three engines
 
-Everything runs in **one Next.js app** — pages and API routes together — so it
-deploys to Vercel as a single project with no separate server and no Redis.
+| | Engine | Domain | What it means |
+|---|---|---|---|
+| 🔥 | **Hearth** | Nutrition | *Where you're fed* |
+| ⚒️ | **Forge** | Training | *Where you're built* |
+| ⚓ | **Anchor** | Retention | *What keeps you here* |
+
+They are separate products, not three prompts. Each has its own module, persona,
+scope and **capability set** — enforced at runtime. Only Forge can flag an injury;
+only Hearth can log food. An engine is never even told about actions it may not
+perform, and out-of-scope actions are dropped on return.
+
+📁 `packages/ai/src/agents/{hearth,forge,anchor}.ts` · `packages/core/src/engines.ts`
+
+## Two surfaces, one brain
 
 ```
-Member (WhatsApp) ─┐                          ┌─ Coach (console UI)
-                   ▼                          ▼
-        apps/dashboard — Next.js app router (pages + /api routes)
-                   │                          │
-                   │  engines: Diet · Training · Retention
-                   ▼
-   Firebase Firestore — the SHARED MEMBER BRAIN (multi-tenant, gymId on every doc)
+   MEMBER  →  /app          COACH / OWNER  →  /dashboard
+   Today · Diet · Training   Members · Approvals · Retention
+   Coach · Progress · Gym    Library · Analytics
+        │                          │
+        └────────────┬─────────────┘
+                     ▼
+   Firestore — the SHARED MEMBER BRAIN (multi-tenant, gymId on every doc)
 
-   Recurring work (metabolic · churn · memory · rituals · wins · cross-gym
-   patterns) runs via /api/jobs/run — Vercel Cron daily, or one click in the console.
+   Recurring work (metabolic · churn · memory · rituals · wins · tiers ·
+   plans · renewals · cross-gym patterns) runs via /api/jobs/run —
+   Vercel Cron daily, or one click in the console.
 ```
+
+Members sign in with their phone number and get everything in the browser. Plans
+render digitally — **there is no PDF**. Coach messages arrive in an in-app inbox;
+WhatsApp is an optional mirror that only fires if it's configured.
 
 ### Workspaces
 
 | Package | What it is |
 |---|---|
-| `packages/db` | Firestore (Admin SDK) data layer for the shared member brain — typed collections, repositories + seed |
-| `packages/core` | Shared types, zod schemas, and the deterministic rules that must be correct: Metabolic Twin regression, adherence gate, Fatigue Guardian, auto-progression, churn scoring, safety guardrails, the k-anonymity/PII gate, the coach-approval state machine |
-| `packages/ai` | `LlmProvider` interface + `GroqProvider` (default, swappable) + engine reasoning |
-| `packages/whatsapp` | Cloud API client, webhook parsing, signature verification |
-| `apps/dashboard` | **The app** — coach console + all API routes + the engine orchestration in `lib/server/` |
-| `apps/api`, `apps/worker` | Legacy standalone NestJS API + BullMQ worker. Kept for reference; **not** part of the deployed app (their logic lives in `apps/dashboard/lib/server/`). |
-
-## Prerequisites
-
-- Node 22+, pnpm 9+ (`npm i -g pnpm`)
-- A **Firebase project** + a service-account key (`service-account.json` in the repo root)
+| `packages/core` | The deterministic rules that must be correct: Metabolic Twin regression, adherence gate, Fatigue Guardian, auto-progression, cross-engine coupling, churn, safety guardrails, the k-anonymity/PII gate, movement + rehab library, engine definitions, approval state machine |
+| `packages/ai` | `LlmProvider` interface + `GroqProvider` (default, swappable), the plan-generation engines, and the three member-facing agents |
+| `packages/db` | Firestore (Admin SDK) data layer — typed repositories + seed |
+| `packages/whatsapp` | Cloud API client (optional mirror channel) |
+| `apps/dashboard` | **The app** — member panel, coach console, all API routes, engine orchestration in `lib/server/` |
+| `apps/api`, `apps/worker` | Legacy standalone NestJS API + BullMQ worker. Kept for reference, **not** built or deployed. |
 
 ## Quickstart
 
 ```bash
-cp .env.example .env            # set FIREBASE_PROJECT_ID; add GROQ_API_KEY for real generations (optional)
+cp .env.example .env      # set FIREBASE_PROJECT_ID; add GROQ_API_KEY for real generations
 # Drop your Firebase service-account key at ./service-account.json (gitignored)
 pnpm install
-pnpm db:seed                    # demo gym + coach + member + protocol library + rituals
-pnpm dev                        # the whole app on :3000
+pnpm db:seed              # demo gym, 11 members, 24 days of logs, protocols, rituals
+pnpm dev                  # the whole app on :3000
 ```
 
-Open http://localhost:3000 and sign in with `coach@demo.gym` / `keystone-demo`.
+| Surface | URL | Login |
+|---|---|---|
+| Member panel | http://localhost:3000/app | `9000000001` / `member-demo` |
+| Coach console | http://localhost:3000/dashboard | `coach@demo.gym` / `keystone-demo` |
 
-## Deploy to Vercel
+## Demo script
 
-One project, one deploy.
+**As a member** (`/app`) — Today shows their calories and session at a glance, with
+rituals to tap off. Diet has the day's meals, a **Craving SOS**, and a food log.
+Training gives real coaching cues and common mistakes per exercise, with "too hard /
+too easy / **it hurts**". Coach is the three engines; tell Hearth *"had dal and 2
+rotis"* and it logs it. Progress shows **their** metabolism vs what a generic
+calculator would have said. Me shows every fact the AI remembers — with a Forget button.
 
-1. **Push the repo** to GitHub and import it in Vercel. `vercel.json` already sets
-   the monorepo build (`pnpm turbo run build --filter=@keystone/dashboard...`) and
-   the daily cron — leave Root Directory as the repo root.
-2. **Generate the Firebase credential** for serverless (no filesystem, so the key
-   travels as an env var):
-   ```bash
-   node scripts/print-service-account-env.mjs
-   ```
-3. **Set env vars** in Vercel → Settings → Environment Variables:
-
-   | Variable | Value |
-   |---|---|
-   | `FIREBASE_PROJECT_ID` | your project id |
-   | `FIREBASE_SERVICE_ACCOUNT` | the base64 blob from step 2 |
-   | `AUTH_SECRET` | `openssl rand -base64 32` |
-   | `GROQ_API_KEY` | your Groq key (omit → deterministic mock responses) |
-   | `CRON_SECRET` | any random string; Vercel Cron sends it automatically |
-
-4. **Seed once** against the same Firebase project (`pnpm db:seed` locally is enough —
-   it writes to the same Firestore).
-5. Deploy. The daily cron hits `/api/jobs/run`; the console's **Run engine jobs**
-   button does the same on demand during a demo.
-
-> No `GROQ_API_KEY`? The app still runs end-to-end on a deterministic mock provider —
-> useful for a dry run, but generate with a real key for a client demo.
-
-## Demo script (what to show the client)
-
-With the app running (`pnpm dev`) and a `GROQ_API_KEY` set, sign in as
-`coach@demo.gym` / `keystone-demo`, then walk this path:
-
-1. **Overview** — the gym at a glance. Hit **Run engine jobs** to fire the
-   recurring work live (Metabolic Twin recompute, churn scoring, memory
-   extraction, ritual dispatch, win detection, cross-gym aggregation).
-2. **Members → Aarav** — the *shared member brain*: the individualized Metabolic
-   Twin TDEE, churn risk with a specific intervention, and the durable memories
-   extracted from his conversations (the switching cost).
-3. **Draft diet plan** — the AI picks a protocol from the library, explains why in
-   one sentence, and personalizes it against his TDEE and memories. The adherence
-   gate and the safe-calorie floor are enforced server-side no matter what the
-   model returns.
-4. **Draft training week** — same flow on the Trend Library. The **Fatigue
-   Guardian** can force a deload the model is not allowed to override, and injured
-   regions get programmed around.
-5. **Approvals** — nothing above has reached the member. Review the payload, open
-   the branded PDF, then **Approve & send** — that is the moment it is delivered.
-6. **Overview → WhatsApp simulator** — send `what's my plan today?` as the member
-   (the concierge auto-answers from his brain), then `I have chest pain during
-   squats` (hard-escalates to a human *before* any model call).
-7. **Retention** — the at-risk queue with per-member suggested interventions, plus
-   the anonymized cross-gym patterns that improve every gym's AI.
-
-To verify the whole thing headlessly:
+**As a coach** (`/dashboard`) — Members → open one to see the brain. Draft a plan;
+open **Review & revise** to see the **"Why the AI did this"** panel (enforced rules
+in red — the moment it stops looking like ChatGPT) and to chat the plan into shape.
+Approve & send. Retention shows who to call and why. Overview runs the engine jobs live.
 
 ```bash
-node scripts/e2e-demo.mjs      # all three engines + the flywheel, through /api
+node scripts/e2e-demo.mjs     # coach flow: both engines + flywheel
+node scripts/e2e-member.mjs   # member flow: panel + all three agents
+pnpm test                     # 93 unit tests on the deterministic rules
 ```
 
 ### API surface
 
 | Route | What it does |
 |---|---|
-| `POST /api/members/:id/diet-plan/generate` | draft a diet plan (coach-gated) |
-| `POST /api/members/:id/training-plan/generate` | draft a training week (coach-gated) |
-| `GET /api/plans/:id` · `GET /api/plans/:id/pdf` | review payload · branded PDF |
-| `POST /api/plans/:id/transition` | the coach gate (`APPROVED` → `ACTIVE` delivers) |
-| `GET /api/messages/pending` · `POST /api/messages/:id/approve` | message approval queue |
-| `POST /api/whatsapp/simulate` | inbound member message, no live number needed |
+| `POST /api/me/login` · `GET /api/me/today` | member auth + home |
+| `GET /api/me/diet` · `/training` · `/progress` · `/profile` · `/gym` · `/inbox` | member screens |
+| `POST /api/me/agent` · `GET /api/me/agent?agent=hearth` | talk to an engine · load its thread |
+| `POST /api/me/log` · `/rituals` | direct logging + ritual completion |
+| `POST /api/members/:id/{diet,training}-plan/generate` | draft a plan (coach-gated) |
+| `POST /api/plans/:id/revise` · `/transition` | AI revision chat · the coach gate |
 | `GET /api/retention/at-risk` · `POST /api/members/:id/wins/scan` | churn queue · send-a-win |
-| `GET /api/analytics/overview` · `GET /api/analytics/patterns` | owner numbers · cross-gym priors |
+| `GET /api/analytics/overview` · `/patterns` | owner numbers · cross-gym priors |
+| `POST /api/sync/import` | roster import from existing gym software (CSV or webhook) |
 | `POST /api/jobs/run` | the recurring engine work (Vercel Cron calls this daily) |
+
+## Deploy to Vercel
+
+1. Push and import the repo. `vercel.json` sets the monorepo build and the daily cron.
+2. `node scripts/print-service-account-env.mjs` → paste as `FIREBASE_SERVICE_ACCOUNT`
+   (serverless has no filesystem for a key file).
+3. Env vars: `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT`, `AUTH_SECRET`,
+   `GROQ_API_KEY`, `CRON_SECRET`.
+4. `pnpm db:seed` once against the same Firebase project.
+
+> No `GROQ_API_KEY`? The app runs end-to-end on a deterministic mock provider —
+> fine for a dry run, but use a real key for a client demo.
 
 ## Tests
 
 ```bash
-pnpm test        # unit tests across packages (adherence gate, metabolic twin,
-                 # churn, guardrails, webhook parsing, LLM structured output)
+pnpm test    # adherence gate, metabolic twin, Fatigue Guardian, auto-progression,
+             # cravings, events, movement library, entitlements, churn, flywheel
+             # PII gate, engine separation + capability isolation
 ```
 
 ## Database (Firebase Firestore)
 
-The shared member brain lives in **Firebase Firestore**, accessed server-side via
-the **Admin SDK** (`packages/db`). App code uses typed repositories
-(`repos.members.*`, `repos.plans.*`, …) — never raw queries scattered around.
+The shared member brain lives in **Firestore**, accessed server-side via the Admin
+SDK. App code uses typed repositories (`repos.members.*`) — never raw queries.
 
-- **Credentials:** set `FIREBASE_PROJECT_ID`, then either point
-  `GOOGLE_APPLICATION_CREDENTIALS` at your service-account JSON locally
-  (`./service-account.json`, gitignored) **or** set `FIREBASE_SERVICE_ACCOUNT` to the
-  key itself (raw JSON or base64) for serverless hosts with no filesystem — see
-  `scripts/print-service-account-env.mjs`. `getDb()` throws early if the project id
-  is missing.
-- **Rules & indexes:** deploy the deny-all client rules in `firestore.rules` and
-  the composite indexes in `firestore.indexes.json` with
+- **Credentials:** `FIREBASE_PROJECT_ID` plus either `GOOGLE_APPLICATION_CREDENTIALS`
+  (local file) or `FIREBASE_SERVICE_ACCOUNT` (raw/base64 JSON, for serverless).
+- **Rules & indexes:** deploy the deny-all client rules in `firestore.rules` with
   `firebase deploy --only firestore`. All access is server-side through the Admin
-  SDK, which bypasses rules — no member or coach browser touches Firestore directly.
+  SDK — no browser touches Firestore directly.
 - **Multi-tenancy:** every document carries `gymId`; uniqueness (gym slug, member
   phone, staff email) is enforced via deterministic document IDs.
 
 ## LLM provider
 
-Set `LLM_PROVIDER=groq` and `GROQ_API_KEY` in `.env`. Without a key the app boots
-on a deterministic **mock provider** so the loop still runs offline. Swapping
-providers means implementing one `LlmProvider` class in `packages/ai` — no engine
-code changes.
+Set `LLM_PROVIDER=groq` and `GROQ_API_KEY`. Two models per task — `reasoning` for
+plan generation, `fast` for agents and parsing. Swapping providers means writing one
+`LlmProvider` class; no engine code changes.
 
 ## Roadmap (see docs/PLAN.md)
 
 - **Phase 0 — Foundation** ✅
-- **Phase 1 — Diet Engine v1** ✅ (first paid product)
-- **Phase 2 — Training Engine v1** ✅
-- **Phase 3 — Retention Engine (full)** ✅
+- **Phase 1 — Diet Engine (Hearth)** ✅
+- **Phase 2 — Training Engine (Forge)** ✅
+- **Phase 3 — Retention Engine (Anchor)** ✅
 - **Phase 4 — Scale & cross-gym flywheel** ✅
+- **Phase 5 — Member panel** ✅ *(beyond the original plan)*

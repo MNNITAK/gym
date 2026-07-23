@@ -104,6 +104,45 @@ describe("churn scoring", () => {
     });
     expect(r.risk).toBe("LOW");
   });
+
+  it("treats neutral sentiment as no signal, not half-risk", () => {
+    const neutral = scoreChurn({
+      attendanceRatio: 1,
+      adherence: 1,
+      responseLatencyNorm: 0,
+      sentiment: 0,
+      tenureDays: 200,
+    });
+    expect(neutral.contributions.sentiment).toBe(0);
+    expect(neutral.risk).toBe("LOW");
+  });
+
+  it("never gives alarming advice on a healthy member", () => {
+    const r = scoreChurn({
+      attendanceRatio: 1,
+      adherence: 0.9,
+      responseLatencyNorm: 0,
+      sentiment: 0,
+      tenureDays: 200,
+    });
+    expect(r.risk).toBe("LOW");
+    // The old code named the largest contributor regardless of size, so a healthy
+    // member was told their "messages read negative".
+    expect(r.suggestion).not.toMatch(/negative|drifting|slipping|quiet/i);
+    expect(r.suggestion).toMatch(/steady|engag/i);
+  });
+
+  it("still names the real driver when risk is genuine", () => {
+    const r = scoreChurn({
+      attendanceRatio: 0.1,
+      adherence: 0.4,
+      responseLatencyNorm: 0.3,
+      sentiment: 0,
+      tenureDays: 200,
+    });
+    expect(["MEDIUM", "HIGH", "CRITICAL"]).toContain(r.risk);
+    expect(r.suggestion).toMatch(/attendance/i);
+  });
 });
 
 describe("approval state machine", () => {

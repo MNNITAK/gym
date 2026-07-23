@@ -36,7 +36,12 @@ export function scoreChurn(f: ChurnFeatures): ChurnResult {
   const attendanceRisk = clamp01(1 - f.attendanceRatio);
   const adherenceRisk = clamp01(1 - f.adherence);
   const latencyRisk = clamp01(f.responseLatencyNorm);
-  const sentimentRisk = clamp01((1 - f.sentiment) / 2); // map -1..1 → 1..0
+  // Only NEGATIVE sentiment is a risk signal. Mapping neutral to 0.5 (as a plain
+  // -1..1 → 1..0 rescale does) meant a member who simply hadn't said anything
+  // emotional carried half the sentiment risk — which then dominated the
+  // contributions for healthy members and produced "messages read negative"
+  // advice on a LOW-risk score.
+  const sentimentRisk = clamp01(-f.sentiment);
 
   const contributions = {
     attendance: attendanceRisk * WEIGHTS.attendance,
@@ -63,11 +68,27 @@ export function scoreChurn(f: ChurnFeatures): ChurnResult {
           ? "MEDIUM"
           : "LOW";
 
-  return { score: round2(score), risk, contributions, suggestion: suggest(contributions, f) };
+  return { score: round2(score), risk, contributions, suggestion: suggest(contributions, f, risk) };
 }
 
-function suggest(c: Record<string, number>, f: ChurnFeatures): string {
-  const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0];
+/** A driver has to actually matter before we name it in coach-facing advice. */
+const MEANINGFUL_CONTRIBUTION = 0.08;
+
+function suggest(
+  c: Record<string, number>,
+  f: ChurnFeatures,
+  risk: ChurnRisk,
+): string {
+  const [top, topValue] = Object.entries(c).sort((a, b) => b[1] - a[1])[0] ?? ["", 0];
+
+  // Don't invent a problem for a healthy member. Naming the largest contributor
+  // regardless of size produced advice that flatly contradicted a LOW score.
+  if (risk === "LOW" || topValue < MEANINGFUL_CONTRIBUTION) {
+    return f.tenureDays < 42
+      ? "New member and engaging well — keep reinforcing the daily rituals while the habit sets."
+      : "Engaged and steady — no intervention needed. Maintain the current cadence.";
+  }
+
   switch (top) {
     case "attendance":
       return "Attendance is drifting — have the coach send a personal check-in and offer to reschedule sessions.";
