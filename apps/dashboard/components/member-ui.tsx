@@ -142,7 +142,7 @@ export function MCard({
   return (
     <div
       onClick={onClick}
-      className={`rounded-2xl border border-neutral-200 bg-white p-4 shadow-xs transition-shadow duration-fast ${onClick ? "cursor-pointer active:scale-[0.99] hover:shadow-sm" : ""} ${className}`}
+      className={`rounded-[1.25rem] border border-neutral-200 bg-white p-4 transition-shadow duration-fast ${onClick ? "cursor-pointer active:scale-[0.99] hover:shadow-sm" : ""} ${className}`}
     >
       {children}
     </div>
@@ -175,18 +175,19 @@ export function MButton({
   // `ink` is the primary tone everywhere in the panel — it carries the brand
   // red. One loud action per screen; everything else is ghost or an engine hue.
   const tones: Record<string, string> = {
-    ink: "bg-primary text-on-primary hover:bg-primary-hover shadow-brand",
-    diet: "bg-diet text-white hover:opacity-90",
-    work: "bg-work text-white hover:opacity-90",
-    energy: "bg-energy text-white hover:opacity-90",
-    ghost: "border border-neutral-300 text-ink bg-surface hover:border-neutral-400",
+    ink: "bg-primary font-semibold text-on-primary hover:bg-primary-hover",
+    diet: "bg-diet font-semibold text-white hover:opacity-90",
+    work: "bg-work font-semibold text-white hover:opacity-90",
+    energy: "bg-energy font-semibold text-white hover:opacity-90",
+    // Utility actions speak mono — the reference's second voice.
+    ghost: "border border-neutral-300 bg-surface font-mono font-semibold text-ink hover:border-neutral-400",
   };
   return (
     <button
       onClick={onClick}
       disabled={busy || disabled}
-      className={`rounded-lg font-bold uppercase tracking-wider transition duration-fast ease-standard active:scale-[0.98] disabled:opacity-50 disabled:shadow-none ${tones[tone]} ${
-        size === "sm" ? "px-3 py-1.5 text-[11px]" : "px-5 py-3 text-xs"
+      className={`rounded-full transition duration-fast ease-standard active:scale-[0.98] disabled:opacity-50 ${tones[tone]} ${
+        size === "sm" ? "px-3.5 py-1.5 text-xs" : "px-5 py-3 text-sm"
       } ${full ? "w-full" : ""}`}
     >
       {busy ? "…" : children}

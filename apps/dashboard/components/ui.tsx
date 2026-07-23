@@ -24,7 +24,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-xl border border-neutral-200 bg-white p-5 shadow-xs transition-shadow duration-fast hover:shadow-sm ${className}`}
+      className={`rounded-[1.25rem] border border-neutral-200 bg-white p-5 transition duration-fast ${className}`}
     >
       {children}
     </div>
@@ -68,18 +68,19 @@ export function Button({
   size?: "sm" | "md";
 }) {
   const tones: Record<string, string> = {
-    ink: "bg-primary text-on-primary hover:bg-primary-hover shadow-brand",
-    diet: "bg-diet text-white hover:opacity-90",
-    work: "bg-work text-white hover:opacity-90",
-    energy: "bg-energy text-white hover:opacity-90",
-    ghost: "border border-neutral-300 bg-surface text-ink hover:border-neutral-400",
+    ink: "bg-primary font-semibold text-on-primary hover:bg-primary-hover",
+    diet: "bg-diet font-semibold text-white hover:opacity-90",
+    work: "bg-work font-semibold text-white hover:opacity-90",
+    energy: "bg-energy font-semibold text-white hover:opacity-90",
+    // Utility actions speak mono — the reference's second voice.
+    ghost: "border border-neutral-300 bg-surface font-mono font-semibold text-ink hover:border-neutral-400",
   };
   return (
     <button
       onClick={onClick}
       disabled={busy || disabled}
-      className={`rounded-lg font-bold uppercase tracking-wider transition duration-fast ease-standard active:scale-[0.98] disabled:opacity-50 disabled:shadow-none ${tones[tone]} ${
-        size === "sm" ? "px-3 py-1.5 text-[11px]" : "px-5 py-2.5 text-xs"
+      className={`rounded-full transition duration-fast ease-standard active:scale-[0.98] disabled:opacity-50 ${tones[tone]} ${
+        size === "sm" ? "px-3.5 py-1.5 text-xs" : "px-5 py-2.5 text-sm"
       }`}
     >
       {busy ? "Working…" : children}

@@ -207,9 +207,16 @@ function Sparkline({ points }: { points: Array<{ date: string; weightKg: number 
     })
     .join(" ");
 
+  const last = points[points.length - 1]!;
+  const lx = w;
+  const ly = h - ((last.weightKg - min) / span) * (h - 8) - 4;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="mt-3 w-full" preserveAspectRatio="none" role="img" aria-label="Weight trend">
-      <path d={d} fill="none" className="stroke-diet" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg viewBox={`0 0 ${w} ${h}`} className="mt-3 w-full overflow-visible" role="img" aria-label="Weight trend">
+      {/* Soft glow under the line, then the line, then the lit endpoint. */}
+      <path d={d} fill="none" className="stroke-[rgb(var(--ks-brand))]" opacity="0.25" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} fill="none" className="stroke-[rgb(var(--ks-brand))]" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={lx} cy={ly} r="4.5" className="fill-[rgb(var(--ks-brand))]" opacity="0.3" />
+      <circle cx={lx} cy={ly} r="2.5" className="fill-[rgb(var(--ks-brand))]" />
     </svg>
   );
 }

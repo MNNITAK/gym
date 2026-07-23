@@ -95,21 +95,29 @@ export default function MePage() {
               Nothing yet — tell a coach about your preferences and it&apos;ll remember.
             </p>
           )}
-          {d?.memories.map((m) => (
-            <MCard key={m.id}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-crm">
-                    {KIND_LABEL[m.kind] ?? m.kind}
-                  </p>
-                  <p className="mt-0.5 text-sm">{m.value}</p>
-                </div>
-                <MButton size="sm" tone="ghost" busy={busy === m.id} onClick={() => forget(m.id)}>
-                  Forget
-                </MButton>
+          {(d?.memories.length ?? 0) > 0 && (
+            <MCard>
+              <div className="space-y-3.5">
+                {d!.memories.map((m) => (
+                  <div key={m.id} className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-start gap-2.5">
+                      {/* The reference's list voice: a red dot, then the fact. */}
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      <div className="min-w-0">
+                        <p className="text-sm leading-snug">{m.value}</p>
+                        <p className="mt-0.5 font-mono text-[9px] uppercase tracking-widest text-neutral-400">
+                          {KIND_LABEL[m.kind] ?? m.kind}
+                        </p>
+                      </div>
+                    </div>
+                    <MButton size="sm" tone="ghost" busy={busy === m.id} onClick={() => forget(m.id)}>
+                      Forget
+                    </MButton>
+                  </div>
+                ))}
               </div>
             </MCard>
-          ))}
+          )}
         </div>
       </section>
 

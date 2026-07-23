@@ -118,6 +118,9 @@
 
   --ks-scrim: 18 17 16;
   --ks-scrim-opacity: 0.32;
+
+  /* No glow on light — the warmth of the bone canvas carries it. */
+  --ks-page-glow: none;
 }
 
 /* ============================================================================
@@ -130,9 +133,9 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --ks-n-0: 12 12 13;
-  --ks-n-25: 18 18 20;
-  --ks-n-50: 24 24 27;
+  --ks-n-0: 6 6 7;
+  --ks-n-25: 14 14 16;
+  --ks-n-50: 20 20 23;
   --ks-n-100: 32 32 36;
   --ks-n-200: 45 45 50;
   --ks-n-300: 66 66 72;
@@ -144,14 +147,14 @@
   --ks-n-900: 244 243 245;
   --ks-n-950: 252 252 253;
 
-  --ks-canvas: 12 12 13;
-  --ks-surface: 22 22 24;
-  --ks-surface-sunken: 16 16 18;
-  --ks-surface-raised: 30 30 33;
+  --ks-canvas: 6 6 7;
+  --ks-surface: 19 19 21;
+  --ks-surface-sunken: 13 13 15;
+  --ks-surface-raised: 27 27 30;
   --ks-surface-inverse: 250 250 250;
 
-  --ks-border-subtle: 33 33 37;
-  --ks-border: 47 47 52;
+  --ks-border-subtle: 28 28 32;
+  --ks-border: 42 42 47;
   --ks-border-strong: 74 74 81;
 
   --ks-text: 246 245 247;
@@ -193,6 +196,14 @@
 
   --ks-scrim: 0 0 0;
   --ks-scrim-opacity: 0.6;
+
+  /* The signature: a red ambience bleeding down from the top of the page. */
+  --ks-page-glow: radial-gradient(
+    120% 45% at 50% 0%,
+    rgb(200 16 46 / 0.09) 0%,
+    rgb(200 16 46 / 0.03) 45%,
+    transparent 70%
+  );
 }
 
 /* ============================================================================

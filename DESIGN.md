@@ -71,6 +71,10 @@ few degrees warm so greys sit *with* the red rather than fighting it. Surfaces:
 | ⚒️ Forge | Training | steel blue | `forge` |
 | ⚓ Anchor | Retention | deep sea | `anchor` |
 
+Red micro-accents are part of the voice: list bullets on remembered facts,
+delta captions under stat numbers, the active nav underline, the lit end of
+a trend line. Small doses, everywhere it means something.
+
 Held at *lower chroma than the red on purpose* — the eye must always find the
 action before the categorisation. Engine hues code data and plans; they are
 never chrome.
@@ -91,6 +95,11 @@ An equal citizen, not an inversion filter:
 - Signal Red is **lifted** (`#DC2440`) because `#C8102E` fails contrast on
   near-black; text-red is lifted further.
 - Never pure `#000` or pure `#FFF` anywhere, either theme.
+
+The canvas is true near-black (`#060607`) with the signature **ambient
+glow** — a faint Signal Red radial bleeding down from the top of every page
+(token `--ks-page-glow`, dark only). Surfaces stay flat; separation comes
+from tone, not shadows.
 
 **Black-and-red is the default presentation.** Light remains a first-class
 choice via the toggle, persisted in `localStorage.ks-theme` and applied
@@ -123,10 +132,11 @@ Rules:
 
 - **4px grid.** Every gap, pad and margin is a multiple. Card padding: 16
   (member) / 20 (console). Section rhythm: 20–24. Screen gutters: 16 → 24.
-- **Shape family:** buttons are the classic athletic register — squared
-  (`rounded-lg`), bold, uppercase, letter-spaced; pills are reserved for
-  badges and chips. Inputs `rounded-xl` (12), cards `rounded-2xl` (16),
-  modals one step larger. Nothing fully circular except avatars and dots.
+- **Shape family:** buttons are flat pills in sentence case — red fill for
+  the primary, bordered surface for secondary; utility/ghost actions speak
+  monospace (the second voice). No shadows on buttons — the language is flat.
+  Inputs `rounded-xl` (12), cards ~20px radius with generous padding, modals
+  one step larger.
 - **Elevation is earned:** resting cards get `shadow-xs` + border; hover lifts
   one step; only overlays (modal, toast) reach `lg/xl`. The product should
   look *printed*, not extruded. On dark, elevation = surface lightness.
@@ -187,6 +197,9 @@ only for celebration.
   earned progress).
 - Grid lines: `border-subtle` at most. No 3D, no gradients-for-decoration.
 - Numbers on charts are tabular; charts draw in with `animate-draw-line`.
+- **The house line chart** is a single Signal Red line with a soft glow
+  (a wide low-opacity stroke under the line) and a lit endpoint dot — no
+  gridlines, no fills, annotation chips only where a number earns it.
 - **Consistency is drawn, not just counted:** the red-intensity `Heatmap`
   (components/charts.tsx) is the house chart for attendance — member progress,
   coach member detail — and `WeekStrip` anchors Today in the week. Intensity:

@@ -42,9 +42,10 @@ export function Nav() {
           </button>
         </div>
 
-        {/* On a phone the tabs drop to their own row and scroll sideways rather
-            than squashing or wrapping into an unusable pile. */}
-        <nav className="-mx-4 mt-2 flex gap-1 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:mt-3 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* Mono links, red underline on the active one — the header voice of
+            the reference. On a phone the row scrolls sideways rather than
+            squashing or wrapping into an unusable pile. */}
+        <nav className="-mx-4 mt-2 flex gap-5 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:mt-3 sm:gap-6 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {LINKS.map((l) => {
             const active = pathname === l.href || pathname.startsWith(`${l.href}/`);
             return (
@@ -52,13 +53,16 @@ export function Nav() {
                 key={l.href}
                 href={l.href}
                 aria-current={active ? "page" : undefined}
-                className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition duration-fast ease-standard sm:px-4 ${
-                  active
-                    ? "bg-ink text-white shadow-xs"
-                    : "text-neutral-600 hover:bg-neutral-100 hover:text-ink"
+                className={`relative shrink-0 pb-1.5 font-mono text-xs font-semibold tracking-wide transition duration-fast ease-standard ${
+                  active ? "text-brand" : "text-neutral-500 hover:text-ink"
                 }`}
               >
                 {l.label}
+                <span
+                  className={`absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-primary transition-opacity duration-fast ${
+                    active ? "opacity-100" : "opacity-0"
+                  }`}
+                />
               </Link>
             );
           })}

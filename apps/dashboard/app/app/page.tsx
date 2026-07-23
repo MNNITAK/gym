@@ -197,8 +197,8 @@ export default function TodayPage() {
           <span className="inline-flex items-center gap-1 rounded-full bg-primary-subtle px-2.5 py-1 font-mono text-[10px] font-bold text-brand">
             <Flame size={11} /> {data?.member.currentStreak ?? 0} day streak
           </span>
-          <span className="rounded-full bg-neutral-100 px-2.5 py-1 font-mono text-[10px] font-bold text-neutral-600">
-            {data?.member.tier ?? "—"}
+          <span className="rounded-full border border-neutral-300 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+            {data?.member.tier ?? "—"} tier
           </span>
           {(data?.unreadMessages ?? 0) > 0 && (
             <Link
@@ -233,7 +233,7 @@ export default function TodayPage() {
             A minute of questions so your coach knows what kind of day to give you.
           </p>
           <div className="mt-3">
-            <MButton tone="work" onClick={() => router.push("/app/checkin")}>
+            <MButton onClick={() => router.push("/app/checkin")}>
               Check in for today
             </MButton>
           </div>
@@ -252,7 +252,7 @@ export default function TodayPage() {
             Ask your coach to put today&apos;s plan together.
           </p>
           <div className="mt-3">
-            <MButton tone="diet" busy={busy === "request"} onClick={requestPlan}>
+            <MButton busy={busy === "request"} onClick={requestPlan}>
               Generate today&apos;s plan
             </MButton>
           </div>

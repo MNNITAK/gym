@@ -81,7 +81,9 @@ export function WhyPanel({ decisions }: { decisions?: EngineDecision[] | null })
                 {(() => {
                   const KIcon = ICON[d.kind];
                   return KIcon ? (
-                    <KIcon size={13} strokeWidth={1.75} className="shrink-0 text-neutral-500" aria-hidden />
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-brand" aria-hidden>
+                      <KIcon size={13} strokeWidth={1.75} />
+                    </span>
                   ) : (
                     <span aria-hidden>•</span>
                   );

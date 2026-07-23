@@ -14,7 +14,11 @@ html {
 }
 
 body {
-  background: rgb(var(--ks-canvas));
+  background-color: rgb(var(--ks-canvas));
+  /* Ambient glow (dark theme only, via token) — fixed so it doesn't scroll away. */
+  background-image: var(--ks-page-glow);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: rgb(var(--ks-text));
   font-feature-settings: "cv05", "ss01";
   -webkit-font-smoothing: antialiased;

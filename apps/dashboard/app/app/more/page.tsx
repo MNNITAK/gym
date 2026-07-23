@@ -84,8 +84,8 @@ export default function MorePage() {
           <span className="inline-flex items-center gap-1 rounded-full bg-primary-subtle px-2.5 py-1 font-mono text-[10px] font-bold text-brand">
             <Flame size={11} /> {data?.member.currentStreak ?? 0} day streak
           </span>
-          <span className="rounded-full bg-neutral-100 px-2.5 py-1 font-mono text-[10px] font-bold text-neutral-600">
-            {data?.member.tier ?? "—"}
+          <span className="rounded-full border border-neutral-300 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+            {data?.member.tier ?? "—"} tier
           </span>
         </div>
       </div>
