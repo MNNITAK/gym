@@ -123,9 +123,10 @@ Rules:
 
 - **4px grid.** Every gap, pad and margin is a multiple. Card padding: 16
   (member) / 20 (console). Section rhythm: 20–24. Screen gutters: 16 → 24.
-- **Shape family:** pills for actions and badges, `rounded-xl` (12) for
-  inputs, `rounded-2xl` (16) for cards, one step larger for modals. Nothing
-  sharp, nothing fully circular except avatars and the monogram slot.
+- **Shape family:** buttons are the classic athletic register — squared
+  (`rounded-lg`), bold, uppercase, letter-spaced; pills are reserved for
+  badges and chips. Inputs `rounded-xl` (12), cards `rounded-2xl` (16),
+  modals one step larger. Nothing fully circular except avatars and dots.
 - **Elevation is earned:** resting cards get `shadow-xs` + border; hover lifts
   one step; only overlays (modal, toast) reach `lg/xl`. The product should
   look *printed*, not extruded. On dark, elevation = surface lightness.
