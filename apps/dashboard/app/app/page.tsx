@@ -12,9 +12,16 @@ import {
   MError,
   useMemberAuth,
 } from "../../components/member-ui";
+import { WaitingState, type WarmupRoutine } from "../../components/waiting";
+
+type Stage = "CHECKIN" | "REQUEST" | "WAITING" | "READY" | "RESTDAY";
 
 interface Today {
   needsOnboarding?: boolean;
+  stage: Stage;
+  checkin: { complete: boolean; checkedIn: boolean; readiness: { band: string; summary: string } | null };
+  request: { id: string; status: string; kinds: string[]; requestedAt: string; note?: string | null } | null;
+  warmup: WarmupRoutine | null;
   member: {
     name: string;
     tier: string;
@@ -62,6 +69,14 @@ export default function TodayPage() {
     if (ready) void load();
   }, [ready, load]);
 
+  // While the coach is deciding, keep checking. Phase 4 replaces this with a
+  // Firestore listener; polling remains the fallback so the flow never stalls.
+  useEffect(() => {
+    if (data?.stage !== "WAITING") return;
+    const id = setInterval(() => void load(), 3000);
+    return () => clearInterval(id);
+  }, [data?.stage, load]);
+
   async function logWeight() {
     const w = Number(weight);
     if (!Number.isFinite(w) || w <= 0) return;
@@ -72,6 +87,18 @@ export default function TodayPage() {
         body: JSON.stringify({ type: "WEIGHT", payload: { weightKg: w } }),
       });
       setWeight("");
+      await load();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function requestPlan() {
+    setBusy("request");
+    try {
+      await meApi("/plan-request", { method: "POST", body: JSON.stringify({}) });
       await load();
     } catch (e) {
       setError((e as Error).message);
@@ -119,6 +146,62 @@ export default function TodayPage() {
         </div>
       </div>
       <MError error={error} />
+
+      {/* Where the member is in the day. Until the coach has approved, the plan
+          cards would be showing yesterday's work — so the stage takes over. */}
+      {data?.stage === "CHECKIN" && (
+        <MCard className="border-work/40 bg-work/5">
+          <p className="text-sm font-bold">Start with your check-in</p>
+          <p className="mt-1 text-xs text-neutral-600">
+            A minute of questions so your coach knows what kind of day to give you.
+          </p>
+          <div className="mt-3">
+            <MButton tone="work" onClick={() => router.push("/app/checkin")}>
+              Check in for today
+            </MButton>
+          </div>
+        </MCard>
+      )}
+
+      {data?.stage === "REQUEST" && (
+        <MCard className="border-diet/40 bg-diet/5">
+          <p className="text-sm font-bold">Check-in done ✓</p>
+          {data.checkin.readiness && (
+            <p className="mt-1 text-xs text-neutral-600">{data.checkin.readiness.summary}</p>
+          )}
+          <p className="mt-2 text-xs text-neutral-600">
+            Ask your coach to put today&apos;s plan together.
+          </p>
+          <div className="mt-3">
+            <MButton tone="diet" busy={busy === "request"} onClick={requestPlan}>
+              Generate today&apos;s plan
+            </MButton>
+          </div>
+        </MCard>
+      )}
+
+      {data?.stage === "WAITING" && (
+        <WaitingState
+          warmup={data.warmup}
+          requestedAt={data.request?.requestedAt}
+          kinds={data.request?.kinds}
+        />
+      )}
+
+      {data?.stage === "RESTDAY" && (
+        <MCard>
+          <p className="text-sm font-bold">Your coach has called today a rest day 😌</p>
+          <p className="mt-1 text-xs text-neutral-600">
+            {data.request?.note ?? "Recovery is part of the plan. Back at it tomorrow."}
+          </p>
+        </MCard>
+      )}
+
+      {data?.stage === "READY" && (
+        <p className="mb-3 rounded-xl bg-diet/10 px-4 py-2 text-sm text-diet">
+          ✅ Your coach approved today&apos;s plan — it&apos;s below.
+        </p>
+      )}
 
       {/* Today's plan at a glance */}
       <div className="grid gap-3 sm:grid-cols-2">
