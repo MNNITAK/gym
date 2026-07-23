@@ -12,6 +12,7 @@ export * from "./flywheel.js";
 export * from "./engines.js";
 export * from "./schedule.js";
 export * from "./onboarding.js";
+export * from "./checkin.js";
 export * from "./decisions.js";
 export * from "./entitlements.js";
 export * from "./cravings.js";

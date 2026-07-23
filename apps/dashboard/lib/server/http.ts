@@ -23,14 +23,31 @@ export async function handle<T>(fn: () => Promise<T>): Promise<NextResponse> {
     // Firestore exhaustion reads "8 RESOURCE_EXHAUSTED: Quota exceeded", which a
     // naive /quota/i test matched — so a dead database was reported as a dead AI,
     // on every screen including login. Check the datastore first and specifically.
-    if (/RESOURCE_EXHAUSTED|Quota exceeded|DEADLINE_EXCEEDED|UNAVAILABLE/i.test(message)) {
+    // Quota exhaustion is a hard stop that needs a human; a dropped connection or
+    // a slow round trip is a blip that usually succeeds on retry. Reporting the
+    // second as the first sends people hunting a billing problem they don't have.
+    if (/RESOURCE_EXHAUSTED|Quota exceeded/i.test(message)) {
       // eslint-disable-next-line no-console
-      console.error("[api] datastore unavailable:", message);
+      console.error("[api] Firestore quota exhausted:", message);
       return NextResponse.json(
         {
           error:
-            "The database is temporarily unavailable — this is a Firestore quota or connectivity problem, not the AI. Try again shortly.",
+            "The database has hit its daily quota. This is a Firebase limit, not the AI — it resets at midnight Pacific, or upgrade the project to remove the cap.",
           datastoreUnavailable: true,
+          quotaExhausted: true,
+          detail: message,
+        },
+        { status: 503 },
+      );
+    }
+
+    if (/UNAVAILABLE|DEADLINE_EXCEEDED|ECONNRESET|ETIMEDOUT|socket hang up/i.test(message)) {
+      // eslint-disable-next-line no-console
+      console.warn("[api] transient datastore blip:", message.split("\n")[0]);
+      return NextResponse.json(
+        {
+          error: "That took too long to reach the database. Please try again.",
+          transient: true,
           detail: message,
         },
         { status: 503 },

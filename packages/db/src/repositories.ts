@@ -4,6 +4,7 @@ import {
   toModel,
   stripUndefined,
   docId,
+  withRetry,
 } from "./firestore.js";
 import { requestCache } from "./cache.js";
 import type {
@@ -54,12 +55,12 @@ async function createDoc<T>(
   const db = getDb();
   const ref = id ? db.collection(collection).doc(id) : db.collection(collection).doc();
   const payload = stripUndefined({ createdAt: new Date(), ...data });
-  await ref.set(payload, { merge: !!id });
+  await withRetry(() => ref.set(payload, { merge: !!id }));
   return { id: ref.id, ...payload } as T;
 }
 
 async function getById<T>(collection: string, id: string): Promise<T | null> {
-  const snap = await getDb().collection(collection).doc(id).get();
+  const snap = await withRetry(() => getDb().collection(collection).doc(id).get());
   return snap.exists ? toModel<T>(snap) : null;
 }
 
@@ -74,8 +75,8 @@ async function updateDoc<T>(
   data: Record<string, unknown>,
 ): Promise<T> {
   const ref = getDb().collection(collection).doc(id);
-  await ref.set(stripUndefined({ ...data, updatedAt: new Date() }), { merge: true });
-  return toModel<T>(await ref.get());
+  await withRetry(() => ref.set(stripUndefined({ ...data, updatedAt: new Date() }), { merge: true }));
+  return toModel<T>(await withRetry(() => ref.get()));
 }
 
 // ── Gyms ─────────────────────────────────────────────────────────────────────
@@ -92,11 +93,13 @@ export const gyms = {
     return gym;
   },
   async findByPhoneNumberId(phoneNumberId: string): Promise<Gym | null> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.gyms)
-      .where("whatsappPhoneNumberId", "==", phoneNumberId)
-      .limit(1)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.gyms)
+          .where("whatsappPhoneNumberId", "==", phoneNumberId)
+          .limit(1)
+          .get(),
+    );
     return snap.empty ? null : toModel<Gym>(snap.docs[0]!);
   },
   async list(): Promise<Gym[]> {
@@ -104,11 +107,13 @@ export const gyms = {
     return snap.docs.map((d) => toModel<Gym>(d));
   },
   async first(): Promise<Gym | null> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.gyms)
-      .orderBy("createdAt", "asc")
-      .limit(1)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.gyms)
+          .orderBy("createdAt", "asc")
+          .limit(1)
+          .get(),
+    );
     return snap.empty ? null : toModel<Gym>(snap.docs[0]!);
   },
   async ping(): Promise<boolean> {
@@ -129,12 +134,14 @@ export const staff = {
     );
   },
   async findByEmail(email: string): Promise<StaffUser | null> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.staffUsers)
-      .where("email", "==", email)
-      .where("active", "==", true)
-      .limit(1)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.staffUsers)
+          .where("email", "==", email)
+          .where("active", "==", true)
+          .limit(1)
+          .get(),
+    );
     return snap.empty ? null : toModel<StaffUser>(snap.docs[0]!);
   },
 };
@@ -171,19 +178,23 @@ export const members = {
   },
   async listByGym(gymId: string): Promise<Member[]> {
     // Equality-only query (auto-indexed); order in memory to avoid a composite index.
-    const snap = await getDb()
-      .collection(COLLECTIONS.members)
-      .where("gymId", "==", gymId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.members)
+          .where("gymId", "==", gymId)
+          .get(),
+    );
     return snap.docs
       .map((d) => toModel<Member>(d))
       .sort((a, b) => b.lastActiveAt.getTime() - a.lastActiveAt.getTime());
   },
   async listActive(): Promise<Member[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.members)
-      .where("status", "==", "ACTIVE")
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.members)
+          .where("status", "==", "ACTIVE")
+          .get(),
+    );
     return snap.docs.map((d) => toModel<Member>(d));
   },
 };
@@ -211,11 +222,13 @@ export const memberMemories = {
     return updateDoc<MemberMemory>(COLLECTIONS.memberMemories, id, { active: false });
   },
   async listActiveByMember(memberId: string): Promise<MemberMemory[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.memberMemories)
-      .where("memberId", "==", memberId)
-      .where("active", "==", true)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.memberMemories)
+          .where("memberId", "==", memberId)
+          .where("active", "==", true)
+          .get(),
+    );
     return snap.docs.map((d) => toModel<MemberMemory>(d));
   },
 };
@@ -226,10 +239,12 @@ export const metabolicTwins = {
     return createDoc<MetabolicTwin>(COLLECTIONS.metabolicTwins, data);
   },
   async latestByMember(memberId: string): Promise<MetabolicTwin | null> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.metabolicTwins)
-      .where("memberId", "==", memberId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.metabolicTwins)
+          .where("memberId", "==", memberId)
+          .get(),
+    );
     if (snap.empty) return null;
     return snap.docs
       .map((d) => toModel<MetabolicTwin>(d))
@@ -254,10 +269,12 @@ export const plans = {
   },
   async listPending(gymId: string): Promise<Plan[]> {
     // Equality-only fetch; filter status + order in memory (no composite index).
-    const snap = await getDb()
-      .collection(COLLECTIONS.plans)
-      .where("gymId", "==", gymId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.plans)
+          .where("gymId", "==", gymId)
+          .get(),
+    );
     const pending = new Set(["DRAFT", "PENDING_REVIEW"]);
     return snap.docs
       .map((d) => toModel<Plan>(d))
@@ -266,11 +283,13 @@ export const plans = {
   },
   /** A member's plans of a type, newest first (progression + fatigue history). */
   async listByMemberType(memberId: string, type: PlanType): Promise<Plan[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.plans)
-      .where("memberId", "==", memberId)
-      .where("type", "==", type)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.plans)
+          .where("memberId", "==", memberId)
+          .where("type", "==", type)
+          .get(),
+    );
     return snap.docs
       .map((d) => toModel<Plan>(d))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -282,13 +301,15 @@ export const plans = {
     type: PlanType,
     exceptId: string,
   ): Promise<void> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.plans)
-      .where("gymId", "==", gymId)
-      .where("memberId", "==", memberId)
-      .where("type", "==", type)
-      .where("status", "==", "ACTIVE")
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.plans)
+          .where("gymId", "==", gymId)
+          .where("memberId", "==", memberId)
+          .where("type", "==", type)
+          .where("status", "==", "ACTIVE")
+          .get(),
+    );
     const batch = getDb().batch();
     for (const doc of snap.docs) {
       if (doc.id !== exceptId) batch.update(doc.ref, { status: "ARCHIVED", updatedAt: new Date() });
@@ -319,10 +340,12 @@ export const logs = {
   async allByMember(memberId: string): Promise<Log[]> {
     const cached = requestCache.get<Log[]>(`logs:${memberId}`);
     if (cached) return cached;
-    const snap = await getDb()
-      .collection(COLLECTIONS.logs)
-      .where("memberId", "==", memberId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.logs)
+          .where("memberId", "==", memberId)
+          .get(),
+    );
     const list = snap.docs
       .map((d) => toModel<Log>(d))
       .sort((a, b) => a.loggedFor.getTime() - b.loggedFor.getTime());
@@ -370,10 +393,12 @@ export const notes = {
     return createDoc<Note>(COLLECTIONS.notes, data);
   },
   async listByMemberRecent(memberId: string, n = 10): Promise<Note[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.notes)
-      .where("memberId", "==", memberId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.notes)
+          .where("memberId", "==", memberId)
+          .get(),
+    );
     return snap.docs
       .map((d) => toModel<Note>(d))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
@@ -393,10 +418,12 @@ export const events = {
   },
   /** Events still worth planning around — from a few days ago to a month ahead. */
   async listUpcomingByMember(memberId: string): Promise<LifeEventRecord[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.events)
-      .where("memberId", "==", memberId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.events)
+          .where("memberId", "==", memberId)
+          .get(),
+    );
     const from = Date.now() - 7 * 864e5;
     const to = Date.now() + 60 * 864e5;
     return snap.docs
@@ -419,11 +446,13 @@ export const protocols = {
     const key = `protocols:${kind}`;
     const cached = requestCache.get<Protocol[]>(key);
     if (cached) return cached;
-    const snap = await getDb()
-      .collection(COLLECTIONS.protocols)
-      .where("kind", "==", kind)
-      .where("active", "==", true)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.protocols)
+          .where("kind", "==", kind)
+          .where("active", "==", true)
+          .get(),
+    );
     const list = snap.docs.map((d) => toModel<Protocol>(d));
     requestCache.set(key, list, 60_000);
     return list;
@@ -439,10 +468,12 @@ export const churnScores = {
     return createDoc<ChurnScore>(COLLECTIONS.churnScores, data);
   },
   async latestByMember(memberId: string): Promise<ChurnScore | null> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.churnScores)
-      .where("memberId", "==", memberId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.churnScores)
+          .where("memberId", "==", memberId)
+          .get(),
+    );
     if (snap.empty) return null;
     return snap.docs
       .map((d) => toModel<ChurnScore>(d))
@@ -454,10 +485,12 @@ export const churnScores = {
    * query per member and spent over a second doing it.
    */
   async latestByGym(gymId: string): Promise<Map<string, ChurnScore>> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.churnScores)
-      .where("gymId", "==", gymId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.churnScores)
+          .where("gymId", "==", gymId)
+          .get(),
+    );
     const latest = new Map<string, ChurnScore>();
     for (const doc of snap.docs) {
       const s = toModel<ChurnScore>(doc);
@@ -474,19 +507,23 @@ export const conversationTurns = {
     return createDoc<ConversationTurn>(COLLECTIONS.conversationTurns, data);
   },
   async existsByProviderMessageId(providerMessageId: string): Promise<boolean> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.conversationTurns)
-      .where("providerMessageId", "==", providerMessageId)
-      .limit(1)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.conversationTurns)
+          .where("providerMessageId", "==", providerMessageId)
+          .limit(1)
+          .get(),
+    );
     return !snap.empty;
   },
   async lastInbound(memberId: string): Promise<ConversationTurn | null> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.conversationTurns)
-      .where("memberId", "==", memberId)
-      .where("direction", "==", "INBOUND")
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.conversationTurns)
+          .where("memberId", "==", memberId)
+          .where("direction", "==", "INBOUND")
+          .get(),
+    );
     if (snap.empty) return null;
     return snap.docs
       .map((d) => toModel<ConversationTurn>(d))
@@ -494,10 +531,12 @@ export const conversationTurns = {
   },
   /** Most-recent turns for a member (newest first) — memory extraction + sentiment. */
   async recentByMember(memberId: string, n = 20): Promise<ConversationTurn[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.conversationTurns)
-      .where("memberId", "==", memberId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.conversationTurns)
+          .where("memberId", "==", memberId)
+          .get(),
+    );
     return snap.docs
       .map((d) => toModel<ConversationTurn>(d))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
@@ -515,10 +554,12 @@ export const conversationTurns = {
     n = 60,
   ): Promise<ConversationTurn[]> {
     const accepted = new Set(Array.isArray(agents) ? agents : [agents]);
-    const snap = await getDb()
-      .collection(COLLECTIONS.conversationTurns)
-      .where("memberId", "==", memberId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.conversationTurns)
+          .where("memberId", "==", memberId)
+          .get(),
+    );
     return snap.docs
       .map((d) => toModel<ConversationTurn>(d))
       .filter((t) => t.agent && accepted.has(t.agent))
@@ -543,21 +584,25 @@ export const outboundMessages = {
     return updateDoc<OutboundMessage>(COLLECTIONS.outboundMessages, id, data as Record<string, unknown>);
   },
   async listPending(gymId: string): Promise<OutboundMessage[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.outboundMessages)
-      .where("gymId", "==", gymId)
-      .where("status", "==", "DRAFT")
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.outboundMessages)
+          .where("gymId", "==", gymId)
+          .where("status", "==", "DRAFT")
+          .get(),
+    );
     return snap.docs
       .map((d) => toModel<OutboundMessage>(d))
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   },
   /** The member's own inbox — everything actually delivered to them, newest first. */
   async inboxForMember(memberId: string, n = 50): Promise<OutboundMessage[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.outboundMessages)
-      .where("memberId", "==", memberId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.outboundMessages)
+          .where("memberId", "==", memberId)
+          .get(),
+    );
     const delivered = new Set(["SENT", "DELIVERED", "READ"]);
     return snap.docs
       .map((d) => toModel<OutboundMessage>(d))
@@ -581,20 +626,24 @@ export const milestones = {
     );
   },
   async existsByKey(memberId: string, key: string): Promise<boolean> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.milestones)
-      .doc(docId(memberId, key))
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.milestones)
+          .doc(docId(memberId, key))
+          .get(),
+    );
     return snap.exists;
   },
   update(id: string, data: Partial<Milestone>): Promise<Milestone> {
     return updateDoc<Milestone>(COLLECTIONS.milestones, id, data as Record<string, unknown>);
   },
   async listByMember(memberId: string): Promise<Milestone[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.milestones)
-      .where("memberId", "==", memberId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.milestones)
+          .where("memberId", "==", memberId)
+          .get(),
+    );
     return snap.docs
       .map((d) => toModel<Milestone>(d))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -613,11 +662,13 @@ export const rituals = {
     );
   },
   async listActiveByGym(gymId: string): Promise<Ritual[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.rituals)
-      .where("gymId", "==", gymId)
-      .where("active", "==", true)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.rituals)
+          .where("gymId", "==", gymId)
+          .where("active", "==", true)
+          .get(),
+    );
     return snap.docs.map((d) => toModel<Ritual>(d));
   },
 };
@@ -634,10 +685,12 @@ export const ritualCompletions = {
     );
   },
   async existsForDay(memberId: string, ritualId: string, forDay: string): Promise<boolean> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.ritualCompletions)
-      .doc(docId(memberId, ritualId, forDay))
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.ritualCompletions)
+          .doc(docId(memberId, ritualId, forDay))
+          .get(),
+    );
     return snap.exists;
   },
 };
@@ -677,10 +730,12 @@ export const dailyCheckins = {
   },
   /** Recent check-ins, newest first — history + "what did they say yesterday". */
   async recentByMember(memberId: string, n = 14): Promise<DailyCheckin[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.dailyCheckins)
-      .where("memberId", "==", memberId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.dailyCheckins)
+          .where("memberId", "==", memberId)
+          .get(),
+    );
     return snap.docs
       .map((d) => toModel<DailyCheckin>(d))
       .sort((a, b) => (a.forDay < b.forDay ? 1 : -1))
@@ -709,10 +764,12 @@ export const planRequests = {
   },
   /** The coach's queue: everything still awaiting a decision, oldest first. */
   async openByGym(gymId: string): Promise<PlanRequest[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.planRequests)
-      .where("gymId", "==", gymId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.planRequests)
+          .where("gymId", "==", gymId)
+          .get(),
+    );
     const open = new Set(["REQUESTED", "IN_REVIEW", "DRAFTED"]);
     return snap.docs
       .map((d) => toModel<PlanRequest>(d))
@@ -720,10 +777,12 @@ export const planRequests = {
       .sort((a, b) => a.requestedAt.getTime() - b.requestedAt.getTime());
   },
   async recentByGym(gymId: string, n = 40): Promise<PlanRequest[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.planRequests)
-      .where("gymId", "==", gymId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.planRequests)
+          .where("gymId", "==", gymId)
+          .get(),
+    );
     return snap.docs
       .map((d) => toModel<PlanRequest>(d))
       .sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime())
@@ -737,10 +796,12 @@ export const measurements = {
     return createDoc<Measurement>(COLLECTIONS.measurements, data);
   },
   async listByMember(memberId: string, n = 60): Promise<Measurement[]> {
-    const snap = await getDb()
-      .collection(COLLECTIONS.measurements)
-      .where("memberId", "==", memberId)
-      .get();
+    const snap = await withRetry(() =>
+        getDb()
+          .collection(COLLECTIONS.measurements)
+          .where("memberId", "==", memberId)
+          .get(),
+    );
     return snap.docs
       .map((d) => toModel<Measurement>(d))
       .sort((a, b) => a.takenOn.getTime() - b.takenOn.getTime())

@@ -216,6 +216,103 @@ export function matchMovement(name: string): Movement | undefined {
   );
 }
 
+// ── Warm-up routines ─────────────────────────────────────────────────────────
+// Shown while a member waits for their coach to approve today's plan. The wait
+// becomes useful instead of dead time, and they arrive at the session already
+// warm. Steps are timed so the screen can be worked through top to bottom.
+
+export interface WarmupStep {
+  name: string;
+  /** how long or how many */
+  duration: string;
+  cue: string;
+}
+
+export interface WarmupRoutine {
+  slug: string;
+  name: string;
+  totalMinutes: number;
+  focus: string;
+  steps: WarmupStep[];
+}
+
+export const WARMUP_ROUTINES: WarmupRoutine[] = [
+  {
+    slug: "general-mobility",
+    name: "Full-body mobility",
+    totalMinutes: 6,
+    focus: "Everything moving before you load it",
+    steps: [
+      { name: "Cat-camel", duration: "10 reps", cue: "Move slowly, one segment at a time" },
+      { name: "World's greatest stretch", duration: "5 each side", cue: "Drop the back hip, rotate through the chest" },
+      { name: "Leg swings", duration: "10 each way", cue: "Hold something, keep the torso still" },
+      { name: "Arm circles", duration: "10 each way", cue: "Small to large, no shrugging" },
+      { name: "Bodyweight squats", duration: "15 reps", cue: "As deep as feels comfortable today" },
+    ],
+  },
+  {
+    slug: "breathing-reset",
+    name: "Breathing reset",
+    totalMinutes: 4,
+    focus: "Down-regulate before a hard session",
+    steps: [
+      { name: "Box breathing", duration: "8 rounds", cue: "In 4, hold 4, out 4, hold 4" },
+      { name: "90/90 breathing", duration: "10 breaths", cue: "Feet on a wall, ribs down, exhale fully" },
+      { name: "Dead bug", duration: "8 each side", cue: "Lower back stays flat throughout" },
+    ],
+  },
+  {
+    slug: "lower-body-prep",
+    name: "Lower-body prep",
+    totalMinutes: 7,
+    focus: "Hips and knees ready to load",
+    steps: [
+      { name: "Glute bridge", duration: "15 reps", cue: "Squeeze at the top, ribs down" },
+      { name: "Clamshell", duration: "12 each side", cue: "Keep the pelvis still" },
+      { name: "Hip flexor stretch", duration: "30s each side", cue: "Squeeze the glute of the back leg" },
+      { name: "Goblet squat (light)", duration: "10 reps", cue: "Elbows inside the knees at the bottom" },
+      { name: "Ankle rocks", duration: "10 each side", cue: "Knee tracks over the toes, heel down" },
+    ],
+  },
+  {
+    slug: "upper-body-prep",
+    name: "Upper-body prep",
+    totalMinutes: 6,
+    focus: "Shoulders and mid-back ready to press and pull",
+    steps: [
+      { name: "Band pull-apart", duration: "15 reps", cue: "Squeeze the shoulder blades, no shrug" },
+      { name: "Scapular push-up", duration: "12 reps", cue: "Arms straight, only the blades move" },
+      { name: "Thoracic rotation", duration: "8 each side", cue: "Rotate from the ribs, not the lower back" },
+      { name: "Band external rotation", duration: "12 each side", cue: "Elbow pinned to the side" },
+      { name: "Incline push-up", duration: "10 reps", cue: "Body in one line, elbows ~45°" },
+    ],
+  },
+  {
+    slug: "light-cardio",
+    name: "Light cardio flush",
+    totalMinutes: 5,
+    focus: "Raise the heart rate gently",
+    steps: [
+      { name: "Easy walk or bike", duration: "3 min", cue: "Conversational pace — you should be able to talk" },
+      { name: "Marching on the spot", duration: "1 min", cue: "Drive the knees, stay tall" },
+      { name: "Gentle skipping", duration: "1 min", cue: "Light on the feet, small hops" },
+    ],
+  },
+];
+
+/** The routine that best fits what's likely coming. */
+export function warmupFor(focus?: string | null): WarmupRoutine {
+  const f = (focus ?? "").toLowerCase();
+  if (/leg|lower|squat|deadlift/.test(f)) return byWarmupSlug("lower-body-prep");
+  if (/push|pull|upper|bench|press/.test(f)) return byWarmupSlug("upper-body-prep");
+  if (/cardio|condition|metcon|run/.test(f)) return byWarmupSlug("light-cardio");
+  return byWarmupSlug("general-mobility");
+}
+
+function byWarmupSlug(slug: string): WarmupRoutine {
+  return WARMUP_ROUTINES.find((r) => r.slug === slug) ?? WARMUP_ROUTINES[0]!;
+}
+
 // ── Injury-aware rehab integration (Training INNOV 04) ───────────────────────
 // A parallel rehab progression that runs alongside training, with explicit
 // return-to-training milestones so recovery is tracked, not guessed.

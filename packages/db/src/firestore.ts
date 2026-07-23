@@ -143,3 +143,34 @@ export function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
 export function docId(...parts: string[]): string {
   return parts.map((p) => p.replace(/\//g, "_")).join("__");
 }
+
+/**
+ * Retry a Firestore call that failed for a transient reason.
+ *
+ * Reaching Firestore from outside Google's network occasionally drops a
+ * connection or exceeds a deadline. Those recover immediately on a second
+ * attempt, and surfacing them to a member as "the database is unavailable" is
+ * both alarming and wrong.
+ *
+ * Deliberately does NOT retry quota exhaustion or permission errors — retrying
+ * those just burns the remaining budget and delays the real message.
+ */
+export async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      const message = err instanceof Error ? err.message : String(err);
+      const transient = /UNAVAILABLE|DEADLINE_EXCEEDED|ECONNRESET|ETIMEDOUT|socket hang up|INTERNAL/i.test(
+        message,
+      );
+      if (!transient || attempt === attempts) throw err;
+      // Short backoff: 150ms, then 450ms. Long enough to clear a blip, short
+      // enough that a member doesn't notice.
+      await new Promise((r) => setTimeout(r, 150 * 3 ** (attempt - 1)));
+    }
+  }
+  throw lastError;
+}
