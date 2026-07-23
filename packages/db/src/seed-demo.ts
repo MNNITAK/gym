@@ -14,6 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import bcrypt from "bcryptjs";
 import { repos } from "./index.js";
+import { buildDietPlan, buildTrainingPlan, couple } from "./seed-plans.js";
 
 const MEMBER_PASSWORD = process.env.DEMO_MEMBER_PASSWORD ?? "member-demo";
 const GYM_SLUG = "demo-gym";
@@ -48,6 +49,15 @@ interface DemoMember {
   notes: string[];
   eventInDays?: number;
   eventType?: "WEDDING" | "TRAVEL" | "HOLIDAY";
+  /** diet protocol for their ACTIVE plan */
+  dietProtocol: string;
+  /** training protocol + whether this week is a forced deload */
+  trainingProtocol: string;
+  deload?: boolean;
+  /** vegetarian members must never be handed meat, even in seeded data */
+  vegetarian?: boolean;
+  /** regions to keep unloaded in the seeded week */
+  avoid?: string[];
 }
 
 const MEMBERS: DemoMember[] = [
@@ -57,6 +67,7 @@ const MEMBERS: DemoMember[] = [
     currentStreak: 26, longestStreak: 31, renewalInDays: 18,
     trueTdee: 2620, intakeDelta: -480, logRate: 0.95, wentQuietDaysAgo: 0,
     avgRpe: 7.2, avgSleep: 7.4, weeksSinceDeload: 2,
+    dietProtocol: "mini-cut", trainingProtocol: "upper-lower",
     memories: [
       { kind: "PREFERENCE", key: "dislikes", value: "does not enjoy paneer, prefers chicken and eggs" },
       { kind: "MOTIVATION", key: "motivation", value: "motivated by numbers and PRs, not compliments" },
@@ -70,6 +81,8 @@ const MEMBERS: DemoMember[] = [
     currentStreak: 19, longestStreak: 44, renewalInDays: 6,
     trueTdee: 2050, intakeDelta: -380, logRate: 0.85, wentQuietDaysAgo: 0,
     avgRpe: 7.0, avgSleep: 7.0, weeksSinceDeload: 3,
+    dietProtocol: "mini-cut", trainingProtocol: "full-body",
+    vegetarian: true, avoid: ["knee"],
     memories: [
       { kind: "CONSTRAINT", key: "diet", value: "strict vegetarian — no meat, fish or eggs" },
       { kind: "INJURY", key: "injury.knee", value: "left knee pain on deep squats since March" },
@@ -88,6 +101,7 @@ const MEMBERS: DemoMember[] = [
     trueTdee: 2750, intakeDelta: +320, logRate: 0.9, wentQuietDaysAgo: 0,
     // Hammering himself: high RPE, bad sleep, no deload in 7 weeks.
     avgRpe: 9.1, avgSleep: 5.4, weeksSinceDeload: 7,
+    dietProtocol: "reverse-diet", trainingProtocol: "ppl", deload: true,
     memories: [
       { kind: "MOTIVATION", key: "motivation", value: "wants visible arms by his brother's wedding" },
       { kind: "PREFERENCE", key: "training", value: "loves heavy pressing, skips legs when tired" },
@@ -100,6 +114,7 @@ const MEMBERS: DemoMember[] = [
     currentStreak: 0, longestStreak: 11, renewalInDays: 4,
     trueTdee: 1900, intakeDelta: -150, logRate: 0.8, wentQuietDaysAgo: 12,
     avgRpe: 6.5, avgSleep: 6.2, weeksSinceDeload: 2,
+    dietProtocol: "maintenance", trainingProtocol: "full-body",
     memories: [
       { kind: "CONSTRAINT", key: "schedule", value: "two young children — can only train 3 days a week" },
       { kind: "MOTIVATION", key: "motivation", value: "responds to encouragement, discouraged by strict targets" },
@@ -113,6 +128,7 @@ const MEMBERS: DemoMember[] = [
     // Eating near maintenance and logging half the time — a real plateau.
     trueTdee: 2500, intakeDelta: -60, logRate: 0.45, wentQuietDaysAgo: 0,
     avgRpe: 7.5, avgSleep: 6.4, weeksSinceDeload: 3,
+    dietProtocol: "maintenance", trainingProtocol: "upper-lower",
     memories: [
       { kind: "PREFERENCE", key: "eating", value: "eats out with clients 3-4 nights a week" },
       { kind: "CONSTRAINT", key: "travel", value: "travels for work most weeks" },
@@ -166,8 +182,9 @@ async function main() {
     // ── 30 days of history ──
     // Weight follows energy balance so the Metabolic Twin can recover trueTdee.
     const kgPerDay = d.intakeDelta / 7700;
-    let weight = d.startWeightKg - kgPerDay * -30; // wind back to where they were
-    weight = d.startWeightKg;
+    let weight = d.startWeightKg;
+    // Accumulate, then write in one batched commit — see logs.createMany.
+    const pending: Array<Parameters<typeof repos.logs.create>[0]> = [];
 
     for (let i = 30; i >= 0; i--) {
       const day = daysAgo(i);
@@ -177,20 +194,19 @@ async function main() {
       if (logsToday) {
         // A little day-to-day noise, or the regression looks synthetic.
         const noise = (pseudoRandom(d.phone, i + 500) - 0.5) * 260;
-        await repos.logs.create({
+        pending.push({
           gymId: gym.id, memberId: member.id, type: "INTAKE", loggedFor: day,
           payload: { kcal: Math.round(d.trueTdee + d.intakeDelta + noise), raw: "logged in app" },
         });
-        await repos.logs.create({
+        pending.push({
           gymId: gym.id, memberId: member.id, type: "WEIGHT", loggedFor: day,
           payload: { weightKg: round1(weight + (pseudoRandom(d.phone, i + 900) - 0.5) * 0.6) },
         });
-        totalLogs += 2;
 
         // Training days: RPE + sets, so Fatigue Guardian and auto-progression have input.
         if (i % 2 === 0) {
           const week = Math.floor((30 - i) / 7);
-          await repos.logs.create({
+          pending.push({
             gymId: gym.id, memberId: member.id, type: "WORKOUT", loggedFor: day,
             payload: {
               rpe: round1(d.avgRpe + (pseudoRandom(d.phone, i + 77) - 0.5)),
@@ -202,15 +218,15 @@ async function main() {
               raw: "session logged",
             },
           });
-          await repos.logs.create({
+          pending.push({
             gymId: gym.id, memberId: member.id, type: "SLEEP", loggedFor: day,
             payload: { hours: round1(d.avgSleep + (pseudoRandom(d.phone, i + 33) - 0.5)) },
           });
-          totalLogs += 2;
         }
       }
       weight += kgPerDay;
     }
+    totalLogs += await repos.logs.createMany(pending);
 
     // ── Durable memory (the switching cost, visible on day one of the demo) ──
     for (const m of d.memories) {
@@ -235,10 +251,39 @@ async function main() {
       });
     }
 
+    // ── An ACTIVE diet + training plan, so Diet and Training are never empty ──
+    const diet = buildDietPlan({
+      protocolSlug: d.dietProtocol,
+      tdee: d.trueTdee,
+      delta: d.intakeDelta,
+      weightKg: d.startWeightKg,
+      vegetarian: d.vegetarian,
+    });
+    const training = buildTrainingPlan({
+      protocolSlug: d.trainingProtocol,
+      deload: d.deload,
+      avoid: d.avoid,
+    });
+
+    await repos.plans.create({
+      gymId: gym.id, memberId: member.id, type: "TRAINING", status: "ACTIVE",
+      payload: training as unknown as Record<string, unknown>,
+      rationale: d.deload
+        ? "Deload week — recovery markers called for it."
+        : `${d.trainingProtocol} suits their experience and available days.`,
+      stateSnapshot: { deload: !!d.deload, injuredRegions: d.avoid ?? [] },
+    });
+    await repos.plans.create({
+      gymId: gym.id, memberId: member.id, type: "DIET", status: "ACTIVE",
+      payload: { ...diet, coupledDays: couple(diet, training) } as unknown as Record<string, unknown>,
+      rationale: `${d.dietProtocol} fits their goal and current adherence.`,
+      stateSnapshot: { tdee: d.trueTdee },
+    });
+
     console.log(
       `  ${d.name.padEnd(16)} ${String(d.trueTdee).padStart(4)} kcal true TDEE · ` +
         `${d.wentQuietDaysAgo ? `quiet ${d.wentQuietDaysAgo}d` : `streak ${d.currentStreak}`} · ` +
-        `${d.memories.length} memories`,
+        `${d.memories.length} memories · plans: ${d.dietProtocol}/${d.trainingProtocol}${d.deload ? " (deload)" : ""}`,
     );
   }
 

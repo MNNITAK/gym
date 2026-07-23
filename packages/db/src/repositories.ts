@@ -29,6 +29,19 @@ import type {
 } from "./types.js";
 
 // ── Generic helpers ──────────────────────────────────────────────────────────
+/**
+ * Write a document and return the model.
+ *
+ * We construct the returned object locally rather than reading the document back.
+ * The read-after-write doubled the round trips on EVERY create — a seed of ~2000
+ * documents became ~4000 sequential calls and effectively hung. The only thing the
+ * server adds is the generated id, which we already know, so the read bought
+ * nothing.
+ *
+ * Caveat: for an upsert onto an existing document (`merge: true`), the result
+ * reflects the fields we just wrote, not the merged whole. Callers that need the
+ * merged document should follow with an explicit get.
+ */
 async function createDoc<T>(
   collection: string,
   data: Record<string, unknown>,
@@ -38,8 +51,7 @@ async function createDoc<T>(
   const ref = id ? db.collection(collection).doc(id) : db.collection(collection).doc();
   const payload = stripUndefined({ createdAt: new Date(), ...data });
   await ref.set(payload, { merge: !!id });
-  const snap = await ref.get();
-  return toModel<T>(snap);
+  return { id: ref.id, ...payload } as T;
 }
 
 async function getById<T>(collection: string, id: string): Promise<T | null> {
@@ -47,6 +59,11 @@ async function getById<T>(collection: string, id: string): Promise<T | null> {
   return snap.exists ? toModel<T>(snap) : null;
 }
 
+/**
+ * Partial update. This one DOES read back, because callers legitimately need the
+ * merged document (a plan after a status transition, a member after a streak
+ * patch) and the patch alone would be a misleading return value.
+ */
 async function updateDoc<T>(
   collection: string,
   id: string,
@@ -313,6 +330,26 @@ export const logs = {
     const fromMs = from.getTime();
     const toMs = to?.getTime() ?? Infinity;
     return all.filter((l) => l.loggedFor.getTime() >= fromMs && l.loggedFor.getTime() < toMs).length;
+  },
+  /**
+   * Write many logs in batched commits. Seeding a month of history one document
+   * at a time is hundreds of sequential round trips; batching turns that into a
+   * handful. Firestore caps a batch at 500 writes.
+   */
+  async createMany(entries: Array<Omit<Log, "id" | "createdAt">>): Promise<number> {
+    const db = getDb();
+    const memberIds = new Set<string>();
+    for (let i = 0; i < entries.length; i += 450) {
+      const batch = db.batch();
+      for (const e of entries.slice(i, i + 450)) {
+        const ref = db.collection(COLLECTIONS.logs).doc();
+        batch.set(ref, stripUndefined({ createdAt: new Date(), ...e }));
+        memberIds.add(e.memberId);
+      }
+      await batch.commit();
+    }
+    for (const id of memberIds) requestCache.invalidate(`logs:${id}`);
+    return entries.length;
   },
   /** Most-recent WEIGHT log value for a member (milestone detection). */
   async latestWeightKg(memberId: string): Promise<number | null> {

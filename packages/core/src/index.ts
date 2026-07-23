@@ -10,6 +10,7 @@ export * from "./training.js";
 export * from "./retention.js";
 export * from "./flywheel.js";
 export * from "./engines.js";
+export * from "./schedule.js";
 export * from "./decisions.js";
 export * from "./entitlements.js";
 export * from "./cravings.js";

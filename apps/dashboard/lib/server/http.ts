@@ -18,16 +18,33 @@ export async function handle<T>(fn: () => Promise<T>): Promise<NextResponse> {
     }
     const message = err instanceof Error ? err.message : "Unexpected error";
 
-    // The LLM provider's daily/second quota is a normal operating condition, not
-    // a crash — surface it as 429 with the retry hint so the console can say
-    // something useful instead of showing a 500.
-    if (/rate limit|429|too many requests|quota/i.test(message)) {
+    // Classify by WHICH provider failed, not by the word "quota".
+    //
+    // Firestore exhaustion reads "8 RESOURCE_EXHAUSTED: Quota exceeded", which a
+    // naive /quota/i test matched — so a dead database was reported as a dead AI,
+    // on every screen including login. Check the datastore first and specifically.
+    if (/RESOURCE_EXHAUSTED|Quota exceeded|DEADLINE_EXCEEDED|UNAVAILABLE/i.test(message)) {
+      // eslint-disable-next-line no-console
+      console.error("[api] datastore unavailable:", message);
+      return NextResponse.json(
+        {
+          error:
+            "The database is temporarily unavailable — this is a Firestore quota or connectivity problem, not the AI. Try again shortly.",
+          datastoreUnavailable: true,
+          detail: message,
+        },
+        { status: 503 },
+      );
+    }
+
+    // The LLM provider's quota is a normal operating condition, not a crash.
+    if (/rate limit|429|too many requests|tokens per (day|minute)/i.test(message)) {
       const retry = message.match(/try again in ([\dhms.]+)/i)?.[1];
       return NextResponse.json(
         {
           error: retry
-            ? `The AI provider is rate-limited — try again in ${retry}.`
-            : "The AI provider is rate-limited — try again shortly.",
+            ? `The AI is busy — try again in ${retry}.`
+            : "The AI is busy — try again shortly.",
           rateLimited: true,
           detail: message,
         },

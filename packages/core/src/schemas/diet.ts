@@ -29,6 +29,12 @@ export const MealSchema = z.object({
   name: z.string(),
   items: z.array(MealItemSchema).min(1),
   macros: MacroTargetsSchema.partial().nullish(),
+  /**
+   * Local "HH:MM" the meal is intended for. Lets the day be laid out as a
+   * schedule rather than an undated list. Optional: older plans predate it, and
+   * `mealTime()` derives a sensible slot from the name when it's absent.
+   */
+  time: z.string().nullish(),
 });
 
 // Cross-engine calorie coupling (IP candidate #2): per-day macro targets derived

@@ -16,6 +16,8 @@ export const TrainingDaySchema = z.object({
   focus: z.string(), // "Push", "Lower", "Conditioning"
   intensity: z.enum(["low", "moderate", "high"]).default("moderate"),
   exercises: z.array(ExerciseSchema).min(1),
+  /** Local "HH:MM" for the session, so it can sit in the day's schedule. */
+  time: z.string().nullish(),
 });
 
 export const TrainingPlanPayloadSchema = z.object({
