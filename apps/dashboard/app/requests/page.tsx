@@ -321,7 +321,7 @@ function Sparkline({ points }: { points: Array<{ date: string; weightKg: number 
     .join(" ");
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="mt-2 w-full" preserveAspectRatio="none" role="img" aria-label="Weight trend">
-      <path d={d} fill="none" stroke="#12995A" strokeWidth="2" strokeLinecap="round" />
+      <path d={d} fill="none" className="stroke-diet" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }

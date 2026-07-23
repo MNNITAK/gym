@@ -3,20 +3,31 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  Home,
+  UtensilsCrossed,
+  Dumbbell,
+  MessageCircle,
+  LayoutGrid,
+  type LucideIcon,
+} from "lucide-react";
 import { clearMemberSession, getMemberToken } from "../lib/member-api";
+import { Wordmark, ThemeToggle } from "./brand";
 
 // ── Member panel chrome ──────────────────────────────────────────────────────
 // Mobile-first: this is a phone app that happens to run in a browser, so the
-// primary navigation is a thumb-reachable bottom bar.
+// primary navigation is a thumb-reachable bottom bar. One icon language
+// (Lucide) across the whole product; the active tab is the one place the
+// bottom bar is allowed to spend red.
 
-const TABS = [
-  { href: "/app", label: "Today", icon: "🏠" },
-  { href: "/app/diet", label: "Diet", icon: "🥗" },
-  { href: "/app/training", label: "Train", icon: "🏋️" },
-  { href: "/app/coach", label: "Coach", icon: "💬" },
+const TABS: Array<{ href: string; label: string; Icon: LucideIcon }> = [
+  { href: "/app", label: "Today", Icon: Home },
+  { href: "/app/diet", label: "Diet", Icon: UtensilsCrossed },
+  { href: "/app/training", label: "Train", Icon: Dumbbell },
+  { href: "/app/coach", label: "Coach", Icon: MessageCircle },
   // Progress, Calendar, History, Measurements, Settings, Gym and Messages all
   // live behind More — five thumb-sized targets is the practical limit.
-  { href: "/app/more", label: "More", icon: "⋯" },
+  { href: "/app/more", label: "More", Icon: LayoutGrid },
 ];
 
 export function useMemberAuth(): boolean {
@@ -49,21 +60,22 @@ export function MemberShell({
       // Clear the fixed tab bar plus any home-indicator inset.
       style={{ paddingBottom: "calc(5.5rem + var(--safe-bottom))" }}
     >
-      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/90 backdrop-blur">
+      <header
+        className="sticky top-0 border-b border-neutral-200 bg-white/90 backdrop-blur"
+        style={{ zIndex: "var(--ks-z-nav)" as never }}
+      >
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3 sm:px-5">
-          <Link href="/app" className="font-mono text-[10px] uppercase tracking-widest text-brand">
-            KEYSTONE
+          <Link href="/app" aria-label="Today">
+            <Wordmark size={13} />
           </Link>
           <div className="flex-1" />
-          <Link href="/app/more" className="text-sm text-neutral-500 hover:text-ink">
-            More
-          </Link>
+          <ThemeToggle />
           <button
             onClick={() => {
               clearMemberSession();
               router.push("/app/login");
             }}
-            className="text-sm text-neutral-400 hover:text-ink"
+            className="text-sm text-neutral-400 transition hover:text-ink"
           >
             Exit
           </button>
@@ -86,8 +98,8 @@ export function MemberShell({
       </main>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-20 border-t border-neutral-200 bg-white"
-        style={{ paddingBottom: "var(--safe-bottom)" }}
+        className="fixed inset-x-0 bottom-0 border-t border-neutral-200 bg-white/95 backdrop-blur"
+        style={{ paddingBottom: "var(--safe-bottom)", zIndex: "var(--ks-z-nav)" as never }}
       >
         <div className="mx-auto flex max-w-2xl">
           {TABS.map((t) => {
@@ -96,13 +108,18 @@ export function MemberShell({
               <Link
                 key={t.href}
                 href={t.href}
-                className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-semibold transition ${
-                  active ? "text-ink" : "text-neutral-400"
+                aria-current={active ? "page" : undefined}
+                className={`relative flex flex-1 flex-col items-center gap-1 pb-2 pt-2.5 text-[10px] font-semibold transition duration-fast ${
+                  active ? "text-brand" : "text-neutral-400 hover:text-neutral-600"
                 }`}
               >
-                <span className={`text-lg leading-none ${active ? "" : "opacity-60"}`}>
-                  {t.icon}
-                </span>
+                {/* Active indicator — a short bar above the icon, brand red. */}
+                <span
+                  className={`absolute top-0 h-0.5 w-8 rounded-full bg-primary transition-opacity duration-fast ${
+                    active ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+                <t.Icon size={20} strokeWidth={active ? 2.25 : 1.75} />
                 {t.label}
               </Link>
             );
@@ -125,7 +142,7 @@ export function MCard({
   return (
     <div
       onClick={onClick}
-      className={`rounded-2xl border border-neutral-200 bg-white p-4 ${onClick ? "cursor-pointer active:scale-[0.99]" : ""} ${className}`}
+      className={`rounded-2xl border border-neutral-200 bg-white p-4 shadow-xs transition-shadow duration-fast ${onClick ? "cursor-pointer active:scale-[0.99] hover:shadow-sm" : ""} ${className}`}
     >
       {children}
     </div>
@@ -155,18 +172,20 @@ export function MButton({
   full?: boolean;
   size?: "sm" | "md";
 }) {
+  // `ink` is the primary tone everywhere in the panel — it carries the brand
+  // red. One loud action per screen; everything else is ghost or an engine hue.
   const tones: Record<string, string> = {
-    ink: "bg-ink text-white",
-    diet: "bg-diet text-white",
-    work: "bg-work text-white",
-    energy: "bg-energy text-white",
-    ghost: "border border-neutral-300 text-ink bg-white",
+    ink: "bg-primary text-on-primary hover:bg-primary-hover shadow-brand",
+    diet: "bg-diet text-white hover:opacity-90",
+    work: "bg-work text-white hover:opacity-90",
+    energy: "bg-energy text-white hover:opacity-90",
+    ghost: "border border-neutral-300 text-ink bg-surface hover:border-neutral-400",
   };
   return (
     <button
       onClick={onClick}
       disabled={busy || disabled}
-      className={`rounded-full font-semibold transition active:scale-95 disabled:opacity-50 ${tones[tone]} ${
+      className={`rounded-full font-semibold transition duration-fast ease-standard active:scale-[0.97] disabled:opacity-50 disabled:shadow-none ${tones[tone]} ${
         size === "sm" ? "px-3 py-1.5 text-xs" : "px-5 py-3 text-sm"
       } ${full ? "w-full" : ""}`}
     >
@@ -177,7 +196,11 @@ export function MButton({
 
 export function MError({ error }: { error: string | null }) {
   if (!error) return null;
-  return <p className="mt-3 rounded-xl bg-energy/10 px-4 py-2 text-sm text-energy">{error}</p>;
+  return (
+    <p role="alert" className="mt-3 animate-rise rounded-xl border border-critical/15 bg-critical-subtle px-4 py-2 text-sm text-critical">
+      {error}
+    </p>
+  );
 }
 
 export function MacroBar({

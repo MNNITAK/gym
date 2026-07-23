@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { clearToken } from "../lib/api";
+import { Wordmark, ThemeToggle } from "./brand";
 
 const LINKS = [
   { href: "/dashboard", label: "Overview" },
@@ -18,24 +20,25 @@ export function Nav() {
   const router = useRouter();
 
   return (
-    <header className="border-b border-neutral-200 bg-white">
+    <header
+      className="sticky top-0 border-b border-neutral-200 bg-white/95 backdrop-blur"
+      style={{ zIndex: "var(--ks-z-nav)" as never }}
+    >
       <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 sm:py-4">
         <div className="flex items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="font-mono text-xs uppercase tracking-widest text-brand"
-          >
-            KEYSTONE
+          <Link href="/dashboard" aria-label="KEYSTONE overview">
+            <Wordmark size={15} sub="Coach console" />
           </Link>
           <div className="flex-1" />
+          <ThemeToggle />
           <button
             onClick={() => {
               clearToken();
               router.push("/login");
             }}
-            className="text-sm text-neutral-500 hover:text-ink"
+            className="inline-flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-ink"
           >
-            Sign out
+            <LogOut size={14} /> Sign out
           </button>
         </div>
 
@@ -48,8 +51,11 @@ export function Nav() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition sm:px-4 ${
-                  active ? "bg-ink text-white" : "text-neutral-600 hover:bg-neutral-100"
+                aria-current={active ? "page" : undefined}
+                className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition duration-fast ease-standard sm:px-4 ${
+                  active
+                    ? "bg-ink text-white shadow-xs"
+                    : "text-neutral-600 hover:bg-neutral-100 hover:text-ink"
                 }`}
               >
                 {l.label}

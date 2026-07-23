@@ -1,0 +1,252 @@
+/* ============================================================================
+   KEYSTONE — Design Tokens
+   ----------------------------------------------------------------------------
+   The single source of truth for the visual language. Nothing in the product
+   should hard-code a colour, radius, shadow or duration; everything resolves
+   through this file, which is the only place a brand decision is made.
+
+   Values are stored as space-separated RGB channels so Tailwind's opacity
+   modifiers keep working: rgb(var(--ks-brand) / <alpha-value>) lets
+   `bg-brand/10` mean what it has always meant.
+
+   THE THREE-COLOUR RULE
+   Obsidian, Bone and Signal Red carry the brand. Everything structural is
+   neutral; red is spent, never sprinkled. If red appears on a screen it means
+   one of four things: this is the primary action, this is live, this is
+   progress, or this is an achievement. Domain accents (Hearth/Forge/Anchor)
+   are deliberately held at lower chroma than the red so the eye always finds
+   the action first.
+   ========================================================================= */
+
+:root {
+  /* ── Brand constants (identical in both themes) ───────────────────────── */
+  --ks-signal: 200 16 46; /* #C8102E — Signal Red, the one brand colour     */
+  --ks-obsidian: 18 17 16; /* #121110 — warm near-black, never pure #000    */
+  --ks-bone: 251 250 249; /* #FBFAF9 — warm off-white, never pure #FFF      */
+
+  /* ── Neutral ramp — warm graphite ─────────────────────────────────────── */
+  /* Deliberately warm (a touch of red in the greys) so neutrals sit with the
+     brand rather than fighting it. Inverted wholesale in dark mode, which is
+     what lets existing `text-neutral-600` markup theme itself. */
+  --ks-n-0: 255 255 255;
+  --ks-n-25: 251 250 249;
+  --ks-n-50: 246 244 242;
+  --ks-n-100: 237 234 231;
+  --ks-n-200: 225 221 217;
+  --ks-n-300: 205 200 194;
+  --ks-n-400: 158 152 145;
+  --ks-n-500: 118 112 105;
+  --ks-n-600: 90 85 80;
+  --ks-n-700: 64 60 56;
+  --ks-n-800: 41 39 37;
+  --ks-n-900: 26 25 24;
+  --ks-n-950: 12 12 13;
+
+  /* ── Signal Red ramp ──────────────────────────────────────────────────── */
+  --ks-red-50: 255 243 244;
+  --ks-red-100: 255 227 229;
+  --ks-red-200: 255 197 202;
+  --ks-red-300: 255 152 161;
+  --ks-red-400: 244 99 111;
+  --ks-red-500: 224 35 53;
+  --ks-red-600: 200 16 46;
+  --ks-red-700: 165 13 38;
+  --ks-red-800: 126 11 30;
+  --ks-red-900: 92 9 22;
+
+  /* ── Engine accents ───────────────────────────────────────────────────── */
+  /* One hue per AI engine, tuned to equal perceptual weight so they read as a
+     set. Used for domain coding in data and plans — never for chrome. */
+  --ks-hearth: 179 84 30; /* nutrition — ember  */
+  --ks-forge: 44 95 138; /* training  — steel  */
+  --ks-anchor: 31 110 92; /* retention — deep sea */
+
+  /* ── Status ───────────────────────────────────────────────────────────── */
+  --ks-positive: 27 122 75;
+  --ks-caution: 146 104 15;
+  --ks-critical: 179 24 43;
+  --ks-info: 44 95 138;
+}
+
+/* ============================================================================
+   LIGHT THEME — the default
+   ========================================================================= */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --ks-canvas: var(--ks-bone);
+  --ks-surface: 255 255 255;
+  --ks-surface-sunken: 246 244 242;
+  --ks-surface-raised: 255 255 255;
+  --ks-surface-inverse: 18 17 16;
+
+  --ks-border-subtle: 237 234 231;
+  --ks-border: 225 221 217;
+  --ks-border-strong: 187 181 174;
+
+  --ks-text: 18 17 16;
+  --ks-text-secondary: 90 85 80;
+  --ks-text-tertiary: 118 112 105;
+  --ks-text-inverse: 255 255 255;
+
+  /* Brand-in-context: the fill a button gets, and the red that is legible as
+     text on this theme's surfaces. They are not the same red. */
+  --ks-brand: var(--ks-signal);
+  --ks-brand-hover: 165 13 38;
+  --ks-brand-text: 176 13 40;
+  --ks-brand-subtle: 255 243 244;
+  --ks-on-brand: 255 255 255;
+
+  --ks-hearth-text: 154 71 24;
+  --ks-forge-text: 39 84 122;
+  --ks-anchor-text: 26 95 79;
+  --ks-hearth-subtle: 252 238 227;
+  --ks-caution-subtle: 250 240 219;
+  --ks-caution-text: 140 96 8;
+  --ks-positive-subtle: 232 245 238;
+  --ks-critical-subtle: 253 236 238;
+
+  /* Elevation — warm-tinted, low-spread. Enterprise software should look
+     printed, not extruded. */
+  --ks-shadow-xs: 0 1px 2px 0 rgb(18 17 16 / 0.05);
+  --ks-shadow-sm: 0 1px 3px 0 rgb(18 17 16 / 0.07), 0 1px 2px -1px rgb(18 17 16 / 0.04);
+  --ks-shadow-md: 0 4px 12px -2px rgb(18 17 16 / 0.08), 0 2px 4px -2px rgb(18 17 16 / 0.04);
+  --ks-shadow-lg: 0 12px 28px -6px rgb(18 17 16 / 0.12), 0 4px 8px -4px rgb(18 17 16 / 0.05);
+  --ks-shadow-xl: 0 24px 56px -12px rgb(18 17 16 / 0.18), 0 8px 16px -8px rgb(18 17 16 / 0.06);
+  --ks-shadow-brand: 0 6px 20px -6px rgb(200 16 46 / 0.35);
+
+  --ks-scrim: 18 17 16;
+  --ks-scrim-opacity: 0.32;
+}
+
+/* ============================================================================
+   DARK THEME — equal citizen, not an inverted afterthought
+   ----------------------------------------------------------------------------
+   Surfaces get lighter as they come forward (shadows do almost nothing on
+   black), the neutral ramp is mirrored so existing `neutral-*` markup themes
+   itself, and the red is lifted because #C8102E is not legible on #0C0C0D.
+   ========================================================================= */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ks-n-0: 12 12 13;
+  --ks-n-25: 18 18 20;
+  --ks-n-50: 24 24 27;
+  --ks-n-100: 32 32 36;
+  --ks-n-200: 45 45 50;
+  --ks-n-300: 66 66 72;
+  --ks-n-400: 106 104 110;
+  --ks-n-500: 143 140 146;
+  --ks-n-600: 176 173 178;
+  --ks-n-700: 208 205 209;
+  --ks-n-800: 231 229 232;
+  --ks-n-900: 244 243 245;
+  --ks-n-950: 252 252 253;
+
+  --ks-canvas: 12 12 13;
+  --ks-surface: 22 22 24;
+  --ks-surface-sunken: 16 16 18;
+  --ks-surface-raised: 30 30 33;
+  --ks-surface-inverse: 250 250 250;
+
+  --ks-border-subtle: 33 33 37;
+  --ks-border: 47 47 52;
+  --ks-border-strong: 74 74 81;
+
+  --ks-text: 246 245 247;
+  --ks-text-secondary: 170 167 173;
+  --ks-text-tertiary: 132 129 135;
+  --ks-text-inverse: 12 12 13;
+
+  --ks-brand: 220 36 64;
+  --ks-brand-hover: 233 64 88;
+  --ks-brand-text: 255 122 133;
+  --ks-brand-subtle: 44 16 22;
+  --ks-on-brand: 255 255 255;
+
+  --ks-hearth: 224 138 74;
+  --ks-forge: 108 165 214;
+  --ks-anchor: 79 183 156;
+  --ks-hearth-text: 240 162 100;
+  --ks-forge-text: 138 187 228;
+  --ks-anchor-text: 106 203 176;
+  --ks-hearth-subtle: 51 32 20;
+  --ks-caution-subtle: 48 39 18;
+  --ks-caution-text: 226 178 82;
+  --ks-positive-subtle: 17 43 31;
+  --ks-critical-subtle: 54 20 24;
+
+  --ks-positive: 69 194 133;
+  --ks-caution: 224 176 74;
+  --ks-critical: 255 107 119;
+  --ks-info: 108 165 214;
+
+  /* On dark, elevation is carried by surface lightness and a hairline ring;
+     the shadow only deepens the separation. */
+  --ks-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --ks-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5);
+  --ks-shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.55);
+  --ks-shadow-lg: 0 12px 28px -6px rgb(0 0 0 / 0.65);
+  --ks-shadow-xl: 0 24px 56px -12px rgb(0 0 0 / 0.75);
+  --ks-shadow-brand: 0 6px 20px -6px rgb(220 36 64 / 0.45);
+
+  --ks-scrim: 0 0 0;
+  --ks-scrim-opacity: 0.6;
+}
+
+/* ============================================================================
+   SPACE, SHAPE, TYPE, MOTION
+   ========================================================================= */
+:root {
+  /* 4px base grid. Every margin, pad and gap in the product is one of these. */
+  --ks-space-1: 0.25rem;
+  --ks-space-2: 0.5rem;
+  --ks-space-3: 0.75rem;
+  --ks-space-4: 1rem;
+  --ks-space-5: 1.25rem;
+  --ks-space-6: 1.5rem;
+  --ks-space-8: 2rem;
+  --ks-space-10: 2.5rem;
+  --ks-space-12: 3rem;
+  --ks-space-16: 4rem;
+  --ks-space-20: 5rem;
+  --ks-space-24: 6rem;
+
+  /* Shape — one family of radii. Controls, pills and containers, nothing else. */
+  --ks-radius-xs: 0.375rem;
+  --ks-radius-sm: 0.5rem;
+  --ks-radius-md: 0.75rem;
+  --ks-radius-lg: 1rem;
+  --ks-radius-xl: 1.25rem;
+  --ks-radius-2xl: 1.5rem;
+  --ks-radius-full: 999px;
+
+  /* Motion — three speeds and three curves. Anything outside this set is a bug.
+     `standard` moves things, `entrance` brings them in with a little authority,
+     `exit` gets out of the way fast. */
+  --ks-duration-instant: 90ms;
+  --ks-duration-fast: 150ms;
+  --ks-duration-normal: 240ms;
+  --ks-duration-slow: 400ms;
+  --ks-duration-deliberate: 640ms;
+
+  --ks-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ks-ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --ks-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ks-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Layering — a fixed ladder so nothing ever guesses a z-index. */
+  --ks-z-base: 0;
+  --ks-z-sticky: 10;
+  --ks-z-nav: 20;
+  --ks-z-dropdown: 30;
+  --ks-z-scrim: 40;
+  --ks-z-modal: 50;
+  --ks-z-toast: 60;
+  --ks-z-tooltip: 70;
+
+  /* Device insets — notch and home indicator, 0 where they don't exist. */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}

@@ -1,20 +1,73 @@
+@import "../styles/tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
-  /* Notch / home-indicator insets, 0 on devices without them. */
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-top: env(safe-area-inset-top, 0px);
+/* ============================================================================
+   Base — everything below assumes the token layer is loaded.
+   ========================================================================= */
+
+html {
+  /* Theme changes cross-fade instead of snapping. */
+  transition: background-color var(--ks-duration-normal) var(--ks-ease-standard);
 }
 
 body {
-  background: #f7f6f2;
-  color: #100e0a;
+  background: rgb(var(--ks-canvas));
+  color: rgb(var(--ks-text));
+  font-feature-settings: "cv05", "ss01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   /* Nothing should ever force a horizontal scrollbar on a phone. */
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
+  transition:
+    background-color var(--ks-duration-normal) var(--ks-ease-standard),
+    color var(--ks-duration-normal) var(--ks-ease-standard);
+}
+
+/* Headings and stat numbers: tight, confident, never floaty. */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* All numeric data aligns in columns — weights, kcal, streaks, money. */
+.tabular,
+table {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: rgb(var(--ks-brand) / 0.18);
+}
+
+/* One focus language for the whole product: a brand ring, only for keyboard.
+   Individual components never invent their own. */
+:focus-visible {
+  outline: 2px solid rgb(var(--ks-brand));
+  outline-offset: 2px;
+  border-radius: var(--ks-radius-xs);
+}
+
+/* Quiet, theme-aware scrollbars. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--ks-n-300)) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--ks-n-300));
+  border-radius: var(--ks-radius-full);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* iOS zooms the whole page when focusing an input under 16px. Keeping the
@@ -39,4 +92,48 @@ body {
 .break-anywhere {
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+/* ============================================================================
+   Loading language
+   ----------------------------------------------------------------------------
+   The product never shows a dead screen. While data loads, the layout is
+   already there in skeleton form; the shimmer says "working", not "frozen".
+   ========================================================================= */
+.ks-skeleton {
+  border-radius: var(--ks-radius-sm);
+  background: linear-gradient(
+    100deg,
+    rgb(var(--ks-n-100)) 40%,
+    rgb(var(--ks-n-50)) 50%,
+    rgb(var(--ks-n-100)) 60%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ============================================================================
+   Motion discipline
+   ----------------------------------------------------------------------------
+   Motion is composited-only (opacity/transform), fast, and always optional.
+   Users who ask the OS for less motion get less motion — everywhere, at once.
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
