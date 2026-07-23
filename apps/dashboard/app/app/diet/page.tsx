@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { meApi } from "../../../lib/member-api";
+import { Candy, Link2, UtensilsCrossed } from "lucide-react";
 import {
   MemberShell,
   MCard,
@@ -99,7 +100,7 @@ export default function DietPage() {
               <MLabel>Today&apos;s target</MLabel>
               {t.coupled && t.intensity && (
                 <span className="rounded-full bg-work/10 px-2 py-0.5 font-mono text-[9px] font-bold text-work">
-                  🔗 tuned for a {t.intensity} training day
+                  <Link2 size={10} className="mr-1 inline" />tuned for a {t.intensity} training day
                 </span>
               )}
             </div>
@@ -119,11 +120,11 @@ export default function DietPage() {
           {/* Craving SOS + quick help */}
           <div className="mt-3 grid grid-cols-2 gap-2">
             <MCard onClick={() => ask("I'm craving something right now, help")} className="border-energy/30 bg-energy/5 text-center">
-              <p className="text-2xl">🍫</p>
+              <Candy size={22} strokeWidth={1.75} className="mx-auto text-energy" />
               <p className="mt-1 text-xs font-bold text-energy">Craving SOS</p>
             </MCard>
             <MCard onClick={() => ask("I'm eating out tonight — what should I order?")} className="text-center">
-              <p className="text-2xl">🍽️</p>
+              <UtensilsCrossed size={22} strokeWidth={1.75} className="mx-auto text-neutral-500" />
               <p className="mt-1 text-xs font-bold">Eating out</p>
             </MCard>
           </div>
@@ -152,7 +153,7 @@ export default function DietPage() {
                           done ? "bg-diet text-white" : "border border-neutral-300"
                         }`}
                       >
-                        {done ? "✓ Ate" : "Ate it"}
+                        {done ? "Ate" : "Ate it"}
                       </button>
                     </div>
                     <button

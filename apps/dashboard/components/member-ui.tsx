@@ -185,8 +185,8 @@ export function MButton({
     <button
       onClick={onClick}
       disabled={busy || disabled}
-      className={`rounded-full font-semibold transition duration-fast ease-standard active:scale-[0.97] disabled:opacity-50 disabled:shadow-none ${tones[tone]} ${
-        size === "sm" ? "px-3 py-1.5 text-xs" : "px-5 py-3 text-sm"
+      className={`rounded-lg font-bold uppercase tracking-wider transition duration-fast ease-standard active:scale-[0.98] disabled:opacity-50 disabled:shadow-none ${tones[tone]} ${
+        size === "sm" ? "px-3 py-1.5 text-[11px]" : "px-5 py-3 text-xs"
       } ${full ? "w-full" : ""}`}
     >
       {busy ? "…" : children}

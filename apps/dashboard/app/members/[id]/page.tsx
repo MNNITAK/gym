@@ -1,5 +1,8 @@
 "use client";
 
+import { Flame, Trophy } from "lucide-react";
+import { Heatmap } from "../../../components/charts";
+
 import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
 import { api, getToken, idFromParam } from "../../../lib/api";
@@ -17,6 +20,7 @@ interface Memory { id: string; kind: string; key: string; value: string; confide
 interface Milestone { id: string; title: string; type: string; celebrated: boolean }
 interface Plan { id: string; type: string; status: string; rationale?: string | null; createdAt: string }
 interface MemberDetail {
+  activity?: Record<string, number>;
   id: string;
   name: string;
   whatsappPhone: string;
@@ -110,7 +114,7 @@ export default function MemberPage({ params }: { params: Promise<{ id: string }>
               <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-mono text-[10px] font-bold text-neutral-600">
                 {m.tier}
               </span>
-              <span className="font-mono text-xs text-work">🔥 {m.currentStreak} day streak</span>
+              <span className="inline-flex items-center gap-1 font-mono text-xs text-brand"><Flame size={12} /> {m.currentStreak} day streak</span>
               {m.churnScore && <RiskBadge risk={m.churnScore.risk} />}
             </>
           )}
@@ -122,6 +126,21 @@ export default function MemberPage({ params }: { params: Promise<{ id: string }>
         <ErrorNote error={error} />
         {flash && (
           <p className="mt-4 rounded-lg bg-diet/10 px-4 py-2 text-sm text-diet">{flash}</p>
+        )}
+
+        {/* Consistency — the churn story at a glance, before any number. */}
+        {m?.activity && (
+          <Card className="mt-6">
+            <div className="flex items-baseline justify-between">
+              <SectionTitle>Consistency · last 12 weeks</SectionTitle>
+              <span className="font-mono text-[10px] text-neutral-400">
+                {Object.values(m.activity).filter((v) => v > 0).length} active days
+              </span>
+            </div>
+            <div className="mt-3">
+              <Heatmap values={m.activity} weeks={12} />
+            </div>
+          </Card>
         )}
 
         {/* Engine actions */}
@@ -251,7 +270,7 @@ export default function MemberPage({ params }: { params: Promise<{ id: string }>
               )}
               {m?.milestones.map((ms) => (
                 <div key={ms.id} className="rounded-lg bg-neutral-50 px-3 py-2">
-                  <p className="text-sm font-semibold">🏆 {ms.title}</p>
+                  <p className="inline-flex items-center gap-1.5 text-sm font-semibold"><Trophy size={13} className="text-caution-text" /> {ms.title}</p>
                   <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
                     {ms.type}
                   </p>

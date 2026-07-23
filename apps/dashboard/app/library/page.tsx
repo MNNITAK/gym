@@ -1,5 +1,7 @@
 "use client";
 
+import { AlertTriangle, ArrowDown, ArrowUp, Check, Flag, X } from "lucide-react";
+
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import { Nav } from "../../components/nav";
@@ -114,7 +116,7 @@ export default function LibraryPage() {
                         <span className="flex shrink-0 items-center gap-2">
                           {m.contraindicatedFor.length > 0 && (
                             <span className="rounded-full bg-energy/10 px-2 py-0.5 font-mono text-[9px] font-bold text-energy">
-                              ⚠ {m.contraindicatedFor.join(", ").replace(/_/g, " ")}
+                              <AlertTriangle size={11} className="mr-1 inline" />{m.contraindicatedFor.join(", ").replace(/_/g, " ")}
                             </span>
                           )}
                           <span className="font-mono text-[10px] text-neutral-400">
@@ -131,7 +133,7 @@ export default function LibraryPage() {
                             </p>
                             <ul className="mt-1 space-y-0.5">
                               {m.cues.map((c, i) => (
-                                <li key={i} className="text-xs text-neutral-600">✓ {c}</li>
+                                <li key={i} className="flex items-start gap-1 text-xs text-neutral-600"><Check size={12} className="mt-0.5 shrink-0 text-diet" /> {c}</li>
                               ))}
                             </ul>
                           </div>
@@ -141,7 +143,7 @@ export default function LibraryPage() {
                             </p>
                             <ul className="mt-1 space-y-0.5">
                               {m.commonMistakes.map((c, i) => (
-                                <li key={i} className="text-xs text-neutral-600">✗ {c}</li>
+                                <li key={i} className="flex items-start gap-1 text-xs text-neutral-600"><X size={12} className="mt-0.5 shrink-0 text-energy" /> {c}</li>
                               ))}
                             </ul>
                           </div>
@@ -150,9 +152,9 @@ export default function LibraryPage() {
                               Ladder
                             </p>
                             <p className="mt-1 text-xs text-neutral-600">
-                              {m.regression ? `⬇ easier: ${m.regression}` : "⬇ entry point"}
+                              <ArrowDown size={11} className="mr-1 inline" />{m.regression ? `easier: ${m.regression}` : "entry point"}
                               {"   ·   "}
-                              {m.progression ? `⬆ harder: ${m.progression}` : "⬆ top of ladder"}
+                              <ArrowUp size={11} className="mr-1 inline" />{m.progression ? `harder: ${m.progression}` : "top of ladder"}
                             </p>
                             {m.equipment.length > 0 && (
                               <p className="mt-1 font-mono text-[10px] text-neutral-400">
@@ -194,7 +196,7 @@ export default function LibraryPage() {
                   ))}
                 </div>
                 <p className="mt-3 rounded-lg bg-energy/5 px-3 py-2 text-xs text-energy">
-                  🚩 Red flags — refer out: {r.redFlags.join(" · ")}
+                  <Flag size={11} className="mr-1 inline" />Red flags — refer out: {r.redFlags.join(" · ")}
                 </p>
               </Card>
             ))}

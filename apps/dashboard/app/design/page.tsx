@@ -22,6 +22,7 @@ import {
   toast,
 } from "../../components/ds";
 import { Button, RiskBadge } from "../../components/ui";
+import { Heatmap, WeekStrip, dateKey } from "../../components/charts";
 
 /* ============================================================================
    /design — the living style guide.
@@ -221,7 +222,7 @@ export default function DesignPage() {
             <ProgressBar value={90} tone="bg-positive" />
           </div>
           <div className="w-64">
-            <SuccessMoment title="12-day streak 🔥" detail="Longest yet. Anchor noticed." />
+            <SuccessMoment title="12-day streak" detail="Longest yet. Anchor noticed." />
           </div>
         </div>
       </Section>
@@ -277,6 +278,20 @@ export default function DesignPage() {
         </Modal>
       </Section>
 
+      {/* ── Calendars & heatmaps ── */}
+      <Section title="Calendars & heatmaps">
+        <div className="space-y-5">
+          <div className="max-w-sm">
+            <WeekStrip marked={{ [dateKey(new Date())]: true }} />
+          </div>
+          <Heatmap values={demoHeat()} weeks={12} />
+          <p className="text-xs text-neutral-500">
+            Every cell is a day; the red is earned — trained, checked in, or logged.
+            Consistency is the product&apos;s core promise, so it gets the brand colour.
+          </p>
+        </div>
+      </Section>
+
       {/* ── Icons ── */}
       <Section title="Iconography — Lucide, one library">
         <p className="flex items-center gap-3 text-neutral-500">
@@ -292,6 +307,19 @@ export default function DesignPage() {
       </p>
     </main>
   );
+}
+
+/** Deterministic demo data so the guide renders the same on every visit. */
+function demoHeat(): Record<string, number> {
+  const out: Record<string, number> = {};
+  const now = new Date();
+  for (let i = 0; i < 84; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    const r = (i * 2654435761) % 7;
+    out[dateKey(d)] = r < 2 ? 3 : r < 3 ? 2 : r < 4 ? 1 : 0;
+  }
+  return out;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

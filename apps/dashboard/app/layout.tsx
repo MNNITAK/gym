@@ -35,18 +35,16 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5, // never block pinch-zoom; that's an accessibility failure
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FBFAF9" },
-    { media: "(prefers-color-scheme: dark)", color: "#0C0C0D" },
-  ],
+  themeColor: "#0C0C0D",
 };
 
 /**
- * Runs before first paint: applies the stored theme (or the OS preference) to
- * <html> so a dark-theme user never sees a white flash. Kept as a string —
- * this must not wait for React to hydrate.
+ * Runs before first paint: applies the stored theme to <html> so there is
+ * never a wrong-theme flash. Kept as a string — this must not wait for React
+ * to hydrate. KEYSTONE presents in black-and-red by default; light remains a
+ * choice, not the fallback.
  */
-const themeScript = `(function(){try{var t=localStorage.getItem("ks-theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t}catch(e){}})()`;
+const themeScript = `(function(){try{var t=localStorage.getItem("ks-theme");if(t!=="light"&&t!=="dark"){t="dark"}document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="dark"}})()`;
 
 export default function RootLayout({
   children,

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { meApi } from "../../../lib/member-api";
+import { Scale } from "lucide-react";
 import {
   MemberShell,
   MCard,
@@ -126,7 +127,7 @@ export default function HistoryPage() {
               </div>
               {c.summary && <p className="mt-1 text-xs text-neutral-600">{c.summary}</p>}
               {c.weightKg != null && (
-                <p className="mt-0.5 font-mono text-[10px] text-neutral-400">⚖ {c.weightKg}kg</p>
+                <p className="mt-0.5 inline-flex items-center gap-1 font-mono text-[10px] text-neutral-400"><Scale size={10} /> {c.weightKg}kg</p>
               )}
             </MCard>
           ))}

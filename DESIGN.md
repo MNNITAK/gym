@@ -92,8 +92,9 @@ An equal citizen, not an inversion filter:
   near-black; text-red is lifted further.
 - Never pure `#000` or pure `#FFF` anywhere, either theme.
 
-Both themes ship, both are audited on `/design`, and the choice persists
-(`localStorage.ks-theme`, applied pre-paint — no flash).
+**Black-and-red is the default presentation.** Light remains a first-class
+choice via the toggle, persisted in `localStorage.ks-theme` and applied
+pre-paint — no flash. Both themes are audited on `/design`.
 
 ## 3. Typography
 
@@ -134,10 +135,11 @@ Rules:
 ## 5. Iconography
 
 **Lucide, exclusively.** 1.75px stroke at rest, 2.25 when active, sized 14–22.
-Icons reinforce meaning next to a label; they never decorate. Emoji are being
-retired from chrome (done: tab bar, nav, landing) and remain only as *content*
-(a streak flame in copy is voice, not UI). Never mix icon sets — a second
-style anywhere breaks the spell for the whole product.
+Icons reinforce meaning next to a label; they never decorate. **Emoji are
+banned from the UI** — every screen was swept (tab bars, engine marks, streaks,
+decision traces, empty states); the streak is a Flame icon, the engines are
+Flame/Hammer/Anchor. Never mix icon sets — a second style anywhere breaks the
+spell for the whole product.
 
 ## 6. Motion
 
@@ -184,6 +186,10 @@ only for celebration.
   earned progress).
 - Grid lines: `border-subtle` at most. No 3D, no gradients-for-decoration.
 - Numbers on charts are tabular; charts draw in with `animate-draw-line`.
+- **Consistency is drawn, not just counted:** the red-intensity `Heatmap`
+  (components/charts.tsx) is the house chart for attendance — member progress,
+  coach member detail — and `WeekStrip` anchors Today in the week. Intensity:
+  trained (3) > checked in (2) > logged (1); the red is earned.
 - Charts consume the same tokens as everything else (`className="stroke-diet"`,
   never `stroke="#12995A"`), so they theme with the rest of the product.
 

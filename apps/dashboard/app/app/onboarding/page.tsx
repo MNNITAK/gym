@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { meApi, getMemberName } from "../../../lib/member-api";
 import { useMemberAuth } from "../../../components/member-ui";
+import { CheckCircle2 } from "lucide-react";
 
 interface Turn {
   role: "member" | "coach";
@@ -148,7 +149,7 @@ export default function OnboardingPage() {
 
         {done && (
           <div className="mt-6 rounded-2xl border border-diet/30 bg-diet/5 p-5 text-center">
-            <p className="text-3xl">✅</p>
+            <CheckCircle2 size={30} strokeWidth={1.5} className="mx-auto text-diet" />
             <p className="mt-2 font-bold">All set, {first}</p>
             <p className="mt-1 text-sm text-neutral-600">
               Your coach has everything they need. Every plan you get from here on is built

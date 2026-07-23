@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MCard, MLabel } from "./member-ui";
+import { Check } from "lucide-react";
 
 export interface WarmupRoutine {
   slug: string;
@@ -105,7 +106,7 @@ export function WaitingState({
                       done[i] ? "bg-work text-white" : "border border-neutral-300"
                     }`}
                   >
-                    {done[i] ? "✓" : "Done"}
+                    {done[i] ? <Check size={13} /> : "Done"}
                   </button>
                 </div>
               </MCard>

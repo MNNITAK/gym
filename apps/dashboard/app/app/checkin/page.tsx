@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { meApi } from "../../../lib/member-api";
 import { MCard, MLabel, MButton, MError, useMemberAuth } from "../../../components/member-ui";
+import { CheckCircle2, ClipboardCheck, Flame } from "lucide-react";
 
 interface Question {
   key: string;
@@ -99,14 +100,14 @@ export default function CheckinPage() {
     return (
       <Shell>
         <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <p className="text-5xl">👋</p>
+          <ClipboardCheck size={40} strokeWidth={1.5} className="mx-auto text-neutral-400" />
           <h1 className="mt-4 text-2xl font-extrabold tracking-tight">Good to see you</h1>
           <p className="mt-2 max-w-xs text-sm text-neutral-600">
             Check in to record today, then tell your coach how you&apos;re doing. Takes about a
             minute.
           </p>
           <div className="mt-3 rounded-full bg-work/10 px-3 py-1 font-mono text-xs font-bold text-work">
-            🔥 {state.streak} day streak
+            <Flame size={11} className="mr-1 inline" />{state.streak} day streak
           </div>
           <div className="mt-8 w-full max-w-xs">
             <MButton full busy={busy} onClick={doCheckIn}>
@@ -124,7 +125,7 @@ export default function CheckinPage() {
     return (
       <Shell>
         <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <p className="text-5xl">🔥</p>
+          <Flame size={40} strokeWidth={1.5} className="mx-auto text-brand" />
           <h1 className="mt-4 text-3xl font-extrabold tracking-tight">
             {justCheckedIn.streak} days
           </h1>
@@ -153,7 +154,7 @@ export default function CheckinPage() {
     return (
       <Shell>
         <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <p className="text-5xl">✅</p>
+          <CheckCircle2 size={40} strokeWidth={1.5} className="mx-auto text-diet" />
           <h1 className="mt-4 text-2xl font-extrabold tracking-tight">That&apos;s everything</h1>
           <p className="mt-2 max-w-xs text-sm text-neutral-600">
             Your coach will use this to decide what today should look like.

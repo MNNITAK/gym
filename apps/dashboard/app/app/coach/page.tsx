@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Anchor, Check, Flame, Hammer, type LucideIcon } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { meApi } from "../../../lib/member-api";
 import { MemberShell, MError, useMemberAuth } from "../../../components/member-ui";
@@ -8,10 +9,10 @@ import { MemberShell, MError, useMemberAuth } from "../../../components/member-u
 type AgentId = "hearth" | "forge" | "anchor";
 
 // The three engines. Named products, not generic bots.
-const AGENTS: Record<AgentId, { name: string; domain: string; emoji: string; tagline: string; accent: string }> = {
-  hearth: { name: "Hearth", domain: "Nutrition", emoji: "🔥", tagline: "Meals, macros, cravings, eating out", accent: "bg-diet" },
-  forge: { name: "Forge", domain: "Training", emoji: "⚒️", tagline: "Sessions, form, load, aches and pains", accent: "bg-work" },
-  anchor: { name: "Anchor", domain: "Your coach", emoji: "⚓", tagline: "Motivation, habits, progress, membership", accent: "bg-crm" },
+const AGENTS: Record<AgentId, { name: string; domain: string; Icon: LucideIcon; tagline: string; accent: string }> = {
+  hearth: { name: "Hearth", domain: "Nutrition", Icon: Flame, tagline: "Meals, macros, cravings, eating out", accent: "bg-diet" },
+  forge: { name: "Forge", domain: "Training", Icon: Hammer, tagline: "Sessions, form, load, aches and pains", accent: "bg-work" },
+  anchor: { name: "Anchor", domain: "Your coach", Icon: Anchor, tagline: "Motivation, habits, progress, membership", accent: "bg-crm" },
 };
 
 interface Turn {
@@ -112,7 +113,7 @@ function CoachInner() {
               agent === a ? "border-ink bg-white shadow-sm" : "border-neutral-200 bg-white/50 opacity-60"
             }`}
           >
-            <p className="text-xl">{AGENTS[a].emoji}</p>
+            {(() => { const AIcon = AGENTS[a].Icon; return <AIcon size={18} strokeWidth={1.75} className="mx-auto text-neutral-600" />; })()}
             <p className="mt-0.5 text-[11px] font-bold">{AGENTS[a].name}</p>
             <p className="text-[9px] text-neutral-400">{AGENTS[a].domain}</p>
           </button>
@@ -125,7 +126,7 @@ function CoachInner() {
       <div className="space-y-2.5">
         {turns.length === 0 && !busy && (
           <div className="rounded-2xl border border-neutral-200 bg-white p-4 text-center">
-            <p className="text-3xl">{meta.emoji}</p>
+            <meta.Icon size={26} strokeWidth={1.5} className="mx-auto text-neutral-500" />
             <p className="mt-2 text-sm font-bold">{meta.name} · {meta.domain}</p>
             <p className="mt-1 text-xs text-neutral-500">
               Knows your plan, your history and what you&apos;ve told it before. Ask anything.
@@ -152,8 +153,8 @@ function CoachInner() {
               {(t.actions?.length ?? 0) > 0 && (
                 <div className="mt-2 space-y-1 border-t border-neutral-100 pt-2">
                   {t.actions!.map((a, j) => (
-                    <p key={j} className="font-mono text-[10px] font-bold text-diet">
-                      ✓ {a.label}
+                    <p key={j} className="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-diet">
+                      <Check size={11} /> {a.label}
                     </p>
                   ))}
                 </div>

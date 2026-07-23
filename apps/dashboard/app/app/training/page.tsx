@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { meApi } from "../../../lib/member-api";
+import { AlertTriangle, Check, Flag, Moon, X } from "lucide-react";
 import {
   MemberShell,
   MCard,
@@ -101,7 +102,7 @@ export default function TrainingPage() {
 
       {data?.plan?.deload && (
         <MCard className="border-energy/30 bg-energy/5">
-          <p className="text-sm font-bold text-energy">⚠️ Deload week</p>
+          <p className="inline-flex items-center gap-1.5 text-sm font-bold text-energy"><AlertTriangle size={14} /> Deload week</p>
           <p className="mt-1 text-xs text-neutral-600">
             Your coach has pulled the intensity back on purpose — your recovery markers called
             for it. Train, but don&apos;t chase records this week.
@@ -122,7 +123,7 @@ export default function TrainingPage() {
               <p className="mt-1 font-mono text-[10px] text-diet">
                 cleared when: {r.stages[0]!.clearedWhen}
               </p>
-              <p className="mt-1 text-[10px] text-energy">🚩 Stop and tell your coach: {r.redFlags.join(" · ")}</p>
+              <p className="mt-1 inline-flex items-start gap-1 text-[10px] text-energy"><Flag size={11} className="mt-0.5 shrink-0" /> Stop and tell your coach: {r.redFlags.join(" · ")}</p>
             </div>
           ))}
         </MCard>
@@ -130,7 +131,7 @@ export default function TrainingPage() {
 
       {!today && (
         <MCard className="mt-3">
-          <p className="text-sm font-bold">Rest day 😌</p>
+          <p className="inline-flex items-center gap-1.5 text-sm font-bold"><Moon size={14} className="text-neutral-400" /> Rest day</p>
           <p className="mt-1 text-xs text-neutral-600">
             Nothing programmed for today. Recovery is part of the plan.
           </p>
@@ -179,7 +180,7 @@ export default function TrainingPage() {
                         done[key] ? "bg-work text-white" : "border border-neutral-300"
                       }`}
                     >
-                      {done[key] ? "✓" : "Done"}
+                      {done[key] ? <Check size={13} /> : "Done"}
                     </button>
                   </div>
 
@@ -190,7 +191,7 @@ export default function TrainingPage() {
                           <div>
                             <p className="font-mono text-[10px] uppercase tracking-widest text-diet">Cues</p>
                             {ex.library.cues.map((c, j) => (
-                              <p key={j} className="text-xs text-neutral-600">✓ {c}</p>
+                              <p key={j} className="inline-flex items-start gap-1 text-xs text-neutral-600"><Check size={12} className="mt-0.5 shrink-0 text-diet" /> {c}</p>
                             ))}
                           </div>
                           <div>
@@ -198,7 +199,7 @@ export default function TrainingPage() {
                               Common mistakes
                             </p>
                             {ex.library.commonMistakes.map((c, j) => (
-                              <p key={j} className="text-xs text-neutral-600">✗ {c}</p>
+                              <p key={j} className="inline-flex items-start gap-1 text-xs text-neutral-600"><X size={12} className="mt-0.5 shrink-0 text-energy" /> {c}</p>
                             ))}
                           </div>
                         </>

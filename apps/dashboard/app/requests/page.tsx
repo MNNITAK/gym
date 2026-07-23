@@ -1,5 +1,7 @@
 "use client";
 
+import { Flame } from "lucide-react";
+
 import { useCallback, useEffect, useState } from "react";
 import { api, getToken } from "../../lib/api";
 import { Nav } from "../../components/nav";
@@ -183,7 +185,7 @@ export default function RequestsPage() {
                     <div>
                       <SectionTitle>Member</SectionTitle>
                       <p className="mt-1 text-sm">
-                        {detail.member.goal ?? "no goal set"} · {detail.member.tier} · 🔥{" "}
+                        {detail.member.goal ?? "no goal set"} · {detail.member.tier} · <Flame size={11} className="inline text-brand" />{" "}
                         {detail.member.currentStreak}
                       </p>
                       {detail.twin && (

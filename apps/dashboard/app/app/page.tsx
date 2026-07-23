@@ -5,6 +5,20 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { meApi, getMemberName } from "../../lib/member-api";
 import {
+  Anchor,
+  Building2,
+  Check,
+  CheckCircle2,
+  Dumbbell,
+  Flame,
+  Hammer,
+  Mail,
+  Moon,
+  Scale,
+  UtensilsCrossed,
+  type LucideIcon,
+} from "lucide-react";
+import {
   MemberShell,
   MCard,
   MLabel,
@@ -13,6 +27,7 @@ import {
   useMemberAuth,
 } from "../../components/member-ui";
 import { WaitingState, type WarmupRoutine } from "../../components/waiting";
+import { WeekStrip, dateKey } from "../../components/charts";
 import { usePlanRequestLive } from "../../lib/realtime";
 
 type Stage = "CHECKIN" | "REQUEST" | "WAITING" | "READY" | "RESTDAY";
@@ -27,10 +42,10 @@ interface DayTask {
   done: boolean;
 }
 
-const TASK_ICON: Record<DayTask["kind"], string> = {
-  WEIGH_IN: "⚖️",
-  MEAL: "🍽️",
-  SESSION: "🏋️",
+const TASK_ICON: Record<DayTask["kind"], LucideIcon> = {
+  WEIGH_IN: Scale,
+  MEAL: UtensilsCrossed,
+  SESSION: Dumbbell,
 };
 
 interface Today {
@@ -177,10 +192,10 @@ export default function TodayPage() {
     <MemberShell>
       <div className="mb-5">
         <p className="text-sm text-neutral-500">{GREETING()},</p>
-        <h1 className="text-2xl font-extrabold tracking-tight">{firstName} 👋</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight">{firstName}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-work/10 px-2.5 py-1 font-mono text-[10px] font-bold text-work">
-            🔥 {data?.member.currentStreak ?? 0} day streak
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary-subtle px-2.5 py-1 font-mono text-[10px] font-bold text-brand">
+            <Flame size={11} /> {data?.member.currentStreak ?? 0} day streak
           </span>
           <span className="rounded-full bg-neutral-100 px-2.5 py-1 font-mono text-[10px] font-bold text-neutral-600">
             {data?.member.tier ?? "—"}
@@ -194,6 +209,18 @@ export default function TodayPage() {
             </Link>
           )}
         </div>
+      </div>
+
+      {/* The week at a glance — today ringed in red; the dot fills once
+          anything is logged. */}
+      <div className="mb-5">
+        <WeekStrip
+          marked={
+            data?.loggedToday.weight || (data?.loggedToday.food ?? 0) > 0 || data?.loggedToday.workout
+              ? { [dateKey(new Date())]: true }
+              : {}
+          }
+        />
       </div>
       <MError error={error} />
 
@@ -215,7 +242,9 @@ export default function TodayPage() {
 
       {data?.stage === "REQUEST" && (
         <MCard className="border-diet/40 bg-diet/5">
-          <p className="text-sm font-bold">Check-in done ✓</p>
+          <p className="inline-flex items-center gap-1.5 text-sm font-bold">
+            <Check size={14} className="text-diet" /> Check-in done
+          </p>
           {data.checkin.readiness && (
             <p className="mt-1 text-xs text-neutral-600">{data.checkin.readiness.summary}</p>
           )}
@@ -241,7 +270,9 @@ export default function TodayPage() {
 
       {data?.stage === "RESTDAY" && (
         <MCard>
-          <p className="text-sm font-bold">Your coach has called today a rest day 😌</p>
+          <p className="inline-flex items-center gap-1.5 text-sm font-bold">
+            <Moon size={14} className="text-neutral-400" /> Your coach has called today a rest day
+          </p>
           <p className="mt-1 text-xs text-neutral-600">
             {data.request?.note ?? "Recovery is part of the plan. Back at it tomorrow."}
           </p>
@@ -249,8 +280,8 @@ export default function TodayPage() {
       )}
 
       {data?.stage === "READY" && (
-        <p className="mb-3 rounded-xl bg-diet/10 px-4 py-2 text-sm text-diet">
-          ✅ Your coach approved today&apos;s plan — it&apos;s below.
+        <p className="mb-3 flex items-center gap-2 rounded-xl bg-diet/10 px-4 py-2 text-sm text-diet">
+          <CheckCircle2 size={15} className="shrink-0" /> Your coach approved today&apos;s plan — it&apos;s below.
         </p>
       )}
 
@@ -325,7 +356,7 @@ export default function TodayPage() {
                     <span className="w-11 shrink-0 font-mono text-[11px] font-bold text-neutral-500">
                       {t.time}
                     </span>
-                    <span className="text-lg">{TASK_ICON[t.kind]}</span>
+                    {(() => { const TIcon = TASK_ICON[t.kind]; return <TIcon size={18} strokeWidth={1.75} className="text-neutral-500" />; })()}
                     <div className="min-w-0 flex-1">
                       <p className={`text-sm font-bold ${t.done ? "line-through" : ""}`}>
                         {t.title}
@@ -340,7 +371,7 @@ export default function TodayPage() {
                       )}
                     </div>
                     {t.done ? (
-                      <span className="shrink-0 text-diet">✓</span>
+                      <Check size={16} className="shrink-0 text-diet" />
                     ) : (
                       <MButton
                         size="sm"
@@ -369,7 +400,7 @@ export default function TodayPage() {
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm">{r.prompt}</p>
                   {r.done ? (
-                    <span className="shrink-0 text-diet">✓</span>
+                    <Check size={16} className="shrink-0 text-diet" />
                   ) : (
                     <MButton size="sm" tone="ghost" busy={busy === r.id} onClick={() => completeRitual(r.id)}>
                       Done
@@ -392,7 +423,7 @@ export default function TodayPage() {
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               inputMode="decimal"
-              placeholder={data?.loggedToday.weight ? "Weight logged today ✓" : "Today's weight (kg)"}
+              placeholder={data?.loggedToday.weight ? "Weight logged today" : "Today's weight (kg)"}
               className="flex-1 rounded-xl border border-neutral-300 px-3 py-2.5 text-sm"
             />
             <MButton busy={busy === "weight"} onClick={logWeight} disabled={!weight}>
@@ -418,14 +449,14 @@ export default function TodayPage() {
         <MLabel>Your three coaches</MLabel>
         <div className="mt-2 grid grid-cols-3 gap-2">
           {[
-            { id: "hearth", emoji: "🔥", label: "Hearth", domain: "Nutrition" },
-            { id: "forge", emoji: "⚒️", label: "Forge", domain: "Training" },
-            { id: "anchor", emoji: "⚓", label: "Anchor", domain: "Everything" },
+            { id: "hearth", Icon: Flame, cls: "text-hearth-text", label: "Hearth", domain: "Nutrition" },
+            { id: "forge", Icon: Hammer, cls: "text-forge-text", label: "Forge", domain: "Training" },
+            { id: "anchor", Icon: Anchor, cls: "text-anchor-text", label: "Anchor", domain: "Everything" },
           ].map((a) => (
             <Link key={a.id} href={`/app/coach?agent=${a.id}`}>
               <MCard className="text-center active:scale-95">
-                <p className="text-2xl">{a.emoji}</p>
-                <p className="mt-1 text-xs font-bold">{a.label}</p>
+                <a.Icon size={22} strokeWidth={1.75} className={`mx-auto ${a.cls}`} />
+                <p className="mt-1.5 text-xs font-bold">{a.label}</p>
                 <p className="text-[9px] text-neutral-400">{a.domain}</p>
               </MCard>
             </Link>
@@ -435,11 +466,14 @@ export default function TodayPage() {
 
       <div className="mt-5 flex gap-2">
         <Link href="/app/gym" className="flex-1">
-          <MCard className="text-center text-xs font-semibold">🏛️ Gym &amp; membership</MCard>
+          <MCard className="flex items-center justify-center gap-1.5 text-center text-xs font-semibold">
+            <Building2 size={14} className="text-neutral-500" /> Gym &amp; membership
+          </MCard>
         </Link>
         <Link href="/app/inbox" className="flex-1">
-          <MCard className="text-center text-xs font-semibold">
-            ✉️ Messages{(data?.unreadMessages ?? 0) > 0 ? ` (${data!.unreadMessages})` : ""}
+          <MCard className="flex items-center justify-center gap-1.5 text-center text-xs font-semibold">
+            <Mail size={14} className="text-neutral-500" /> Messages
+            {(data?.unreadMessages ?? 0) > 0 ? ` (${data!.unreadMessages})` : ""}
           </MCard>
         </Link>
       </div>
@@ -450,11 +484,11 @@ export default function TodayPage() {
 function Chip({ on, children }: { on?: boolean; children: React.ReactNode }) {
   return (
     <span
-      className={`rounded-full px-2.5 py-1 font-mono font-bold ${
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-mono font-bold ${
         on ? "bg-diet/10 text-diet" : "bg-neutral-100 text-neutral-400"
       }`}
     >
-      {on ? "✓ " : "○ "}
+      {on ? <Check size={11} /> : <span className="inline-block h-1.5 w-1.5 rounded-full border border-current" />}
       {children}
     </span>
   );

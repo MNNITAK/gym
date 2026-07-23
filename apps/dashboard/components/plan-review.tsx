@@ -1,5 +1,7 @@
 "use client";
 
+import { Link2 } from "lucide-react";
+
 import { useState } from "react";
 import { api } from "../lib/api";
 import { Button } from "./ui";
@@ -209,7 +211,7 @@ function CoupledDays({ payload }: { payload: Record<string, unknown> }) {
   return (
     <div className="mt-4 rounded-lg border border-work/20 bg-work/5 p-3">
       <p className="font-mono text-[10px] uppercase tracking-widest text-work">
-        🔗 Coupled to the training week
+        <Link2 size={11} className="mr-1 inline" />Coupled to the training week
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         {days.map((d, i) => (

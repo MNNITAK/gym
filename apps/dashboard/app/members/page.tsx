@@ -1,5 +1,7 @@
 "use client";
 
+import { Flame } from "lucide-react";
+
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../../lib/api";
@@ -66,7 +68,7 @@ export default function MembersPage() {
                     <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-mono text-[10px] font-bold text-neutral-600">
                       {m.status}
                     </span>
-                    <span className="font-mono text-xs text-work">🔥 {m.currentStreak}</span>
+                    <span className="inline-flex items-center gap-1 font-mono text-xs text-brand"><Flame size={12} /> {m.currentStreak}</span>
                   </div>
                 </div>
               </Card>

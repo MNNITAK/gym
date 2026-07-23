@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { meApi } from "../../../lib/member-api";
 import { MemberShell, MCard, MLabel, MError, useMemberAuth } from "../../../components/member-ui";
+import { Check, Flame, Trophy } from "lucide-react";
+import { Heatmap } from "../../../components/charts";
 
 interface Progress {
   weightSeries: Array<{ date: string; weightKg: number }>;
@@ -17,9 +19,14 @@ interface Progress {
   engagement: string | null;
 }
 
+interface CalMonth {
+  days: Record<string, { checkedIn: boolean; trained: boolean; logged: boolean }>;
+}
+
 export default function ProgressPage() {
   const ready = useMemberAuth();
   const [d, setD] = useState<Progress | null>(null);
+  const [heat, setHeat] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -27,6 +34,22 @@ export default function ProgressPage() {
       setD(await meApi<Progress>("/progress"));
     } catch (e) {
       setError((e as Error).message);
+    }
+    // The heatmap reuses the calendar months — three fetches cover 12 weeks.
+    // Best-effort: the page is complete without it.
+    try {
+      const months = await Promise.all(
+        [0, 1, 2].map((b) => meApi<CalMonth>(`/calendar?back=${b}`)),
+      );
+      const merged: Record<string, number> = {};
+      for (const m of months) {
+        for (const [key, day] of Object.entries(m.days)) {
+          merged[key] = day.trained ? 3 : day.checkedIn ? 2 : day.logged ? 1 : 0;
+        }
+      }
+      setHeat(merged);
+    } catch {
+      /* heatmap is optional */
     }
   }, []);
 
@@ -94,11 +117,23 @@ export default function ProgressPage() {
         )}
       </MCard>
 
-      {/* Consistency */}
+      {/* Consistency — every day, drawn. The red is earned. */}
+      <MCard className="mt-3">
+        <div className="flex items-baseline justify-between">
+          <MLabel>Last 12 weeks</MLabel>
+          <span className="font-mono text-[10px] text-neutral-400">
+            {Object.values(heat).filter((v) => v > 0).length} active days
+          </span>
+        </div>
+        <div className="mt-3">
+          <Heatmap values={heat} weeks={12} />
+        </div>
+      </MCard>
+
       <div className="mt-3 grid grid-cols-2 gap-3">
         <MCard>
           <MLabel>Streak</MLabel>
-          <p className="mt-1 text-3xl font-extrabold tracking-tight">🔥 {d?.streak.current ?? 0}</p>
+          <p className="mt-1 inline-flex items-center gap-1.5 text-3xl font-extrabold tracking-tight"><Flame size={24} className="text-brand" /> {d?.streak.current ?? 0}</p>
           <p className="text-xs text-neutral-500">Best: {d?.streak.longest ?? 0} days</p>
         </MCard>
         <MCard>
@@ -114,7 +149,7 @@ export default function ProgressPage() {
         <p className="mt-1 text-xl font-extrabold tracking-tight">{d?.tier.current ?? "—"}</p>
         <ul className="mt-1 space-y-0.5">
           {(d?.tier.perks ?? []).map((p, i) => (
-            <li key={i} className="text-xs text-neutral-600">✓ {p}</li>
+            <li key={i} className="flex items-start gap-1 text-xs text-neutral-600"><Check size={12} className="mt-0.5 shrink-0 text-diet" /> {p}</li>
           ))}
         </ul>
         {d?.tier.next && (
@@ -143,7 +178,7 @@ export default function ProgressPage() {
           )}
           {d?.milestones.map((m) => (
             <MCard key={m.id}>
-              <p className="text-sm font-bold">🏆 {m.title}</p>
+              <p className="inline-flex items-center gap-1.5 text-sm font-bold"><Trophy size={14} className="text-caution-text" /> {m.title}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400">
                 {m.type.replace(/_/g, " ")}
               </p>

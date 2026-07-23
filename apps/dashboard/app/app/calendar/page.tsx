@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { meApi } from "../../../lib/member-api";
 import { MemberShell, MCard, MError, useMemberAuth } from "../../../components/member-ui";
+import { Check, Dumbbell, Scale } from "lucide-react";
 
 interface DayCell {
   checkedIn: boolean;
@@ -91,9 +92,9 @@ export default function CalendarPage() {
                 onClick={() => setSelected(selected === c.key ? null : c.key)}
                 className={`aspect-square rounded-lg text-xs font-semibold transition ${
                   c.cell?.trained
-                    ? "bg-work text-white"
+                    ? "bg-primary text-on-primary"
                     : c.cell?.checkedIn
-                      ? "bg-diet/20 text-diet"
+                      ? "bg-primary/30 text-brand"
                       : c.cell?.logged
                         ? "bg-neutral-100 text-neutral-600"
                         : "text-neutral-300"
@@ -110,8 +111,8 @@ export default function CalendarPage() {
         </div>
 
         <div className="mt-3 flex flex-wrap gap-3 border-t border-neutral-100 pt-3">
-          <Legend className="bg-work" label="Trained" />
-          <Legend className="bg-diet/40" label="Checked in" />
+          <Legend className="bg-primary" label="Trained" />
+          <Legend className="bg-primary/30" label="Checked in" />
           <Legend className="bg-neutral-200" label="Logged something" />
         </div>
       </MCard>
@@ -123,9 +124,9 @@ export default function CalendarPage() {
           </p>
           {sel ? (
             <div className="mt-1 space-y-0.5 text-xs text-neutral-600">
-              {sel.checkedIn && <p>✓ Checked in</p>}
-              {sel.trained && <p>✓ Trained</p>}
-              {sel.weightKg != null && <p>⚖ Weighed {sel.weightKg}kg</p>}
+              {sel.checkedIn && <p className="flex items-center gap-1"><Check size={12} className="text-diet" /> Checked in</p>}
+              {sel.trained && <p className="flex items-center gap-1"><Dumbbell size={12} className="text-brand" /> Trained</p>}
+              {sel.weightKg != null && <p className="flex items-center gap-1"><Scale size={12} className="text-neutral-400" /> Weighed {sel.weightKg}kg</p>}
               {!sel.checkedIn && !sel.trained && sel.logged && <p>Logged something</p>}
             </div>
           ) : (
@@ -145,7 +146,7 @@ export default function CalendarPage() {
           <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
             Sessions
           </p>
-          <p className="mt-1 text-3xl font-extrabold tracking-tight text-work">{trainedDays}</p>
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-brand">{trainedDays}</p>
         </MCard>
       </div>
     </MemberShell>

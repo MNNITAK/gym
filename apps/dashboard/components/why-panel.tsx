@@ -1,5 +1,7 @@
 "use client";
 
+import { Activity, BatteryLow, BookOpen, Brain, CalendarDays, Candy, FlaskConical, Link2, Lock, Scale, StickyNote, TrendingUp, type LucideIcon } from "lucide-react";
+
 export interface EngineDecision {
   kind: string;
   label: string;
@@ -8,19 +10,19 @@ export interface EngineDecision {
   source?: string;
 }
 
-const ICON: Record<string, string> = {
-  protocol: "📚",
-  metabolic: "🔬",
-  adherence: "⚖️",
-  safety: "🔒",
-  memory: "🧠",
-  injury: "🦵",
-  fatigue: "😴",
-  coupling: "🔗",
-  progression: "📈",
-  event: "📅",
-  craving: "🍫",
-  note: "📝",
+const ICON: Record<string, LucideIcon> = {
+  protocol: BookOpen,
+  metabolic: FlaskConical,
+  adherence: Scale,
+  safety: Lock,
+  memory: Brain,
+  injury: Activity,
+  fatigue: BatteryLow,
+  coupling: Link2,
+  progression: TrendingUp,
+  event: CalendarDays,
+  craving: Candy,
+  note: StickyNote,
 };
 
 const SEVERITY: Record<
@@ -60,8 +62,8 @@ export function WhyPanel({ decisions }: { decisions?: EngineDecision[] | null })
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
-          🧠 Why the AI did this
+        <p className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+          <Brain size={12} /> Why the AI did this
         </p>
         {enforced > 0 && (
           <p className="font-mono text-[10px] text-energy">
@@ -76,7 +78,14 @@ export function WhyPanel({ decisions }: { decisions?: EngineDecision[] | null })
           return (
             <div key={i} className={`rounded-lg border px-3 py-2 ${s.row}`}>
               <div className="flex flex-wrap items-center gap-2">
-                <span aria-hidden>{ICON[d.kind] ?? "•"}</span>
+                {(() => {
+                  const KIcon = ICON[d.kind];
+                  return KIcon ? (
+                    <KIcon size={13} strokeWidth={1.75} className="shrink-0 text-neutral-500" aria-hidden />
+                  ) : (
+                    <span aria-hidden>•</span>
+                  );
+                })()}
                 <span className="text-xs font-bold">{d.label}</span>
                 <span className={`rounded-full px-1.5 py-0.5 font-mono text-[9px] font-bold ${s.chip}`}>
                   {s.label}
